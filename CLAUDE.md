@@ -31,8 +31,10 @@ It is its own repository, a submodule of the house like the Softanza book. The p
 - `python tools/build_site.py` assembles `site/` (ignored by git) from the pinned books; `python tools/check_public.py site` is the gate
   (no PDF or ePub, every reader the book's own file byte for byte, every draft banner kept, links resolve). GitHub Actions runs both.
   Before a first push: `python tools/check_public.py tree` and `... history <repo>` for each repository.
-- **Three acts are the author's, and are never performed without his explicit "go" in the session**: creating a public repository, the first
-  push, switching Pages on. Prepare everything up to them, then ask.
+- **Publishing is the author's, and never done without his explicit "go" in the session**: creating a public repository, pushing to one,
+  switching Pages on. Prepare, then ask. The first three acts were done on 2026-10-14 (DECISIONS HOUSE-03): `mayouni/ayouni`,
+  `mayouni/softanza-book` and `mayouni/writing-framework` are public and Pages is on, so from now **every push to them publishes at once**:
+  ask first, and ask the book session to tell the desk before it pushes.
 - No PDF or ePub online unless the author says so. Keep every page's draft banner.
 
 ## Rules that bind this session
