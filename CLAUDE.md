@@ -20,6 +20,7 @@ Unless the author says otherwise, a book session works in its book's folder; the
 
 **The writing framework.** `writing-framework/` is the AYOUNI Writing Framework: how the author writes (from the Ring book study), what agents do and
 do not do in an AYOUNI book, the briefs, the checklists and the tools. Every book session reads its `CLAUDE.md` before drafting or revising prose.
+It is its own repository, a submodule of the house like the Softanza book. The platform's own repository is not part of the house.
 
 ## Publication (the house session's work)
 

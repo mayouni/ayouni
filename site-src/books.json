@@ -34,7 +34,7 @@
       "series": { "en": "Second of the AYOUNI books", "fr": "Deuxième des livres AYOUNI" },
       "author": "Mansour Ayouni",
       "known_gaps": [
-        { "ref": "status.html", "note": "The reader links ../status.html, the book's status page. It is not published: it prints this machine's paths. Reported to the book session." },
+        { "ref": "status.html", "note": "The reader links ../status.html, the book's status page. It is not published: the author has not ruled on it. It no longer prints this machine's paths, but it names the former host language 175 times in library file names." },
         { "ref": "assets/fonts/", "note": "The book's assets/fonts folder is empty, so the reader names font files that are not in the repository and falls back to installed or system fonts. Reported to the book session." }
       ]
     }

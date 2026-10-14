@@ -10,7 +10,7 @@ AYOUNI is the house mark; AYOUNI Press is its books imprint. The site is built f
 | `books/softanza-book/` | *Softanza: The Governed Software Platform of the AI Age* (submodule: its own repository and history). Every page is a draft and says so |
 | `books/refinement-book/` | *Refinement-Oriented Programming* |
 | `books/ring-book/` | the archive of the author's first book (Apress, 2020); its manuscript files are never public |
-| `writing-framework/` | the AYOUNI Writing Framework: the one voice of the books |
+| `writing-framework/` | the AYOUNI Writing Framework: the one voice of the books (submodule: its own repository and history) |
 | `site-src/`, `tools/`, `.github/` | how the site is assembled and checked |
 
 Clone with the books: `git clone --recurse-submodules https://github.com/mayouni/ayouni.git`.
