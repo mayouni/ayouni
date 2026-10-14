@@ -1,0 +1,20 @@
+# AYOUNI house repository: what stays on this machine, and what never goes online.
+
+# Local to this machine
+.claude/
+prompts/
+.cache/
+__pycache__/
+*.pyc
+scratch/
+
+# Built by tools/build_site.py (GitHub Actions rebuilds it from the pinned books)
+site/
+
+# No PDF or ePub online unless the author says so (DECISIONS HOUSE-05)
+*.pdf
+*.epub
+
+# Beginning Ring Programming (Apress, 2020): the manuscript files are Apress's property and never go public (HOUSE-06).
+# The archive is a repository of its own; until the author gives his word to detach it, nothing of it is tracked here.
+books/ring-book/

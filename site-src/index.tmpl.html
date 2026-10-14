@@ -1,0 +1,73 @@
+<!DOCTYPE html>
+<html lang="$lang">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>$page_title</title>
+<meta name="description" content="$description">
+<link rel="alternate" hreflang="en" href="$href_en">
+<link rel="alternate" hreflang="fr" href="$href_fr">
+<link rel="alternate" type="text/plain" href="$href_llms" title="llms.txt">
+<style>
+/* One type scale, by semantic level: house > book > subtitle > body > label. A component never takes a size of its own. */
+:root {
+  --t-house: 44px; --t-book: 30px; --t-subtitle: 21px; --t-body: 17px; --t-label: 13px;
+  --ink: #1d1b19; --paper: #fbf8f3; --quiet: #5b564f; --rule: #d9d2c7; --accent: #8a3b12;
+}
+@media (max-width: 480px) {
+  :root { --t-house: 36px; --t-book: 26px; --t-subtitle: 19px; --t-body: 17px; --t-label: 13px; }
+}
+@media (prefers-color-scheme: dark) {
+  :root { --ink: #efe9df; --paper: #171512; --quiet: #a89f92; --rule: #38332c; --accent: #e0a074; }
+}
+* { box-sizing: border-box; }
+html { background: var(--paper); }
+body { margin: 0 auto; padding: 48px 16px 64px; max-width: 46rem; color: var(--ink); background: var(--paper);
+  font: var(--t-body)/1.6 'EB Garamond', Georgia, 'Times New Roman', serif; }
+h1 { font-size: var(--t-house); line-height: 1.1; margin: 4px 0 16px; letter-spacing: .01em; }
+h2 { font-size: var(--t-book); line-height: 1.2; margin: 0 0 4px; }
+a { color: var(--accent); text-underline-offset: 3px; }
+a:focus-visible { outline: 2px solid var(--accent); outline-offset: 3px; }
+.label { font: 600 var(--t-label)/1.4 system-ui, 'Segoe UI', sans-serif; letter-spacing: .06em; text-transform: uppercase; color: var(--quiet); margin: 0; }
+.lead { font-size: var(--t-subtitle); line-height: 1.45; margin: 0 0 20px; }
+.lang { margin: 0 0 8px; font: 500 var(--t-label)/1.4 system-ui, 'Segoe UI', sans-serif; }
+.lang [aria-current] { color: var(--ink); font-weight: 700; text-decoration: none; }
+.book, .agents { display: flex; gap: 24px; align-items: flex-start; border-top: 1px solid var(--rule); padding: 32px 0; }
+.book img { flex: none; width: 140px; height: auto; border: 1px solid var(--rule); }
+.book .text, .agents .text { min-width: 0; }
+.subtitle { font-size: var(--t-subtitle); line-height: 1.35; margin: 0 0 12px; }
+.tagline { font-style: italic; margin: 0 0 12px; }
+.state { margin: 0 0 12px; }
+.links { list-style: none; margin: 0 0 12px; padding: 0; }
+.links li { margin: 2px 0; }
+.links .note { color: var(--quiet); }
+footer { border-top: 1px solid var(--rule); padding-top: 24px; }
+@media (max-width: 480px) {
+  .book { flex-direction: column; gap: 16px; }
+}
+</style>
+</head>
+<body>
+<header>
+  <p class="label">$mark</p>
+  <h1>$line</h1>
+  <p class="lead">$lead</p>
+  <nav class="lang" aria-label="$lang_label">$lang_switch</nav>
+</header>
+<main>
+$books_html
+<section class="agents">
+  <div class="text">
+    <h2>$agents_h</h2>
+    <p>$agents_p</p>
+    <ul class="links">
+$agents_links
+    </ul>
+  </div>
+</section>
+</main>
+<footer>
+  <p class="label">$footer</p>
+</footer>
+</body>
+</html>
