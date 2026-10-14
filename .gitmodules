@@ -1,0 +1,6 @@
+[submodule "books/softanza-book"]
+	path = books/softanza-book
+	url = https://github.com/mayouni/softanza-book.git
+[submodule "writing-framework"]
+	path = writing-framework
+	url = https://github.com/mayouni/writing-framework.git
