@@ -69,7 +69,7 @@ STRINGS = {
             "pdf": "the book as a PDF, to read or print",
             "epub": "the book as an ePub",
         },
-        "invite": ("If this book is useful to your organisation, I work with organisations on its subjects: paper copies in quantity, "
+        "invite": ("If one of these books is useful to your organisation, I work with organisations on its subjects: paper copies in quantity, "
                    "workshops and training, talks, consulting and the building of solutions. Write to {email}."),
         "work_h": "Working with the author",
         "work_more": "How these books are offered",
@@ -110,7 +110,7 @@ STRINGS = {
             "pdf": "le livre en PDF, à lire ou à imprimer",
             "epub": "le livre en ePub",
         },
-        "invite": ("Si ce livre est utile à votre organisation, je travaille avec les organisations sur ses sujets : exemplaires papier en quantité, "
+        "invite": ("Si l'un de ces livres est utile à votre organisation, je travaille avec les organisations sur ses sujets : exemplaires papier en quantité, "
                    "ateliers et formations, conférences, conseil et réalisation de solutions. Écrivez à {email}."),
         "work_h": "Travailler avec l'auteur",
         "work_more": "Comment ces livres sont offerts",
@@ -400,6 +400,16 @@ def render_agents(reg, lang):
         '    <ul class="links">', *items, '    </ul>', '  </div>', '</section>'])
 
 
+LOGO = ROOT / "site-src" / "assets" / "ayouni-logo.svg"
+LOGO_PATH = "assets/ayouni-logo.svg"
+
+
+def logo_tag(page, height):
+    """The AYOUNI logo, as its SVG (traced from the author's logo), wherever the mark appears; the width follows the viewBox."""
+    vb = [float(v) for v in re.search(r'viewBox="([^"]+)"', LOGO.read_text(encoding="utf-8")).group(1).split()]
+    return f'<img class="logo" src="{href_to(page, LOGO_PATH)}" alt="AYOUNI" width="{round(height * vb[2] / vb[3])}" height="{height}">'
+
+
 def render_page(reg, lang, key, main, layout):
     """One page of the house in one language, inside the shared layout."""
     S = STRINGS[lang]
@@ -421,8 +431,9 @@ def render_page(reg, lang, key, main, layout):
         href_en=absolute("en"),
         href_fr=absolute("fr"),
         href_llms=urljoin(house["address"], "llms.txt"),
-        mark=e(house["mark"]),
-        h1=e(house["line"][lang] if key == "index" else S["pages"][key]["title"]),
+        brand="" if key == "index" else (
+            f'<p class="brand"><a href="{href_to(page, PAGES["index"][lang])}" aria-label="{e(house["line"][lang])}">{logo_tag(page, 36)}</a></p>'),
+        h1=(e(house["line"][lang]).replace(house["mark"], logo_tag(page, 56)) if key == "index" else e(S["pages"][key]["title"])),
         lead=e(S["lead"] if key == "index" else S["pages"][key]["lead"]),
         nav_label=e(S["nav_label"]),
         site_nav=nav,
@@ -526,6 +537,8 @@ def main():
             target.write_text(render_page(reg, lang, key, main_html, layout), encoding="utf-8")
     (out / "llms.txt").write_text(render_llms(reg, manifests, states), encoding="utf-8")
     (out / ".nojekyll").write_text("", encoding="utf-8")
+    (out / LOGO_PATH).parent.mkdir(parents=True, exist_ok=True)
+    shutil.copyfile(LOGO, out / LOGO_PATH)
 
     addr = reg["house"]["address"]
     books_out = []

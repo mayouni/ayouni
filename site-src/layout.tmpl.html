@@ -11,11 +11,11 @@
 <style>
 /* One type scale, by semantic level: house > book > subtitle > body > label. A component never takes a size of its own. */
 :root {
-  --t-house: 44px; --t-book: 30px; --t-subtitle: 21px; --t-body: 17px; --t-label: 13px;
-  --ink: #1d1b19; --paper: #fbf8f3; --quiet: #5b564f; --rule: #d9d2c7; --accent: #8a3b12;
+  --t-house: 48px; --t-book: 34px; --t-subtitle: 24px; --t-body: 20px; --t-label: 14px;
+  --ink: #17140f; --paper: #fbf8f3; --quiet: #54504a; --rule: #d9d2c7; --accent: #8a3b12;
 }
 @media (max-width: 480px) {
-  :root { --t-house: 36px; --t-book: 26px; --t-subtitle: 19px; --t-body: 17px; --t-label: 13px; }
+  :root { --t-house: 38px; --t-book: 28px; --t-subtitle: 21px; --t-body: 19px; --t-label: 14px; }
 }
 @media (prefers-color-scheme: dark) {
   :root { --ink: #efe9df; --paper: #171512; --quiet: #a89f92; --rule: #38332c; --accent: #e0a074; }
@@ -23,7 +23,12 @@
 * { box-sizing: border-box; }
 html { background: var(--paper); }
 body { margin: 0 auto; padding: 48px 16px 64px; max-width: 46rem; color: var(--ink); background: var(--paper);
-  font: var(--t-body)/1.6 'EB Garamond', Georgia, 'Times New Roman', serif; }
+  font: var(--t-body)/1.65 Georgia, 'EB Garamond', 'Times New Roman', serif; }
+.logo { display: inline-block; vertical-align: -0.12em; height: 1.15em; width: auto; }
+.brand { margin: 0 0 12px; }
+.brand a { display: inline-block; line-height: 0; }
+.brand .logo { height: 36px; }
+h1 .logo { height: 1.1em; }
 h1 { font-size: var(--t-house); line-height: 1.1; margin: 4px 0 16px; letter-spacing: .01em; }
 h2 { font-size: var(--t-book); line-height: 1.2; margin: 0 0 4px; }
 a { color: var(--accent); text-underline-offset: 3px; }
@@ -60,7 +65,7 @@ footer p { margin: 0 0 8px; }
 </head>
 <body class="$body_class">
 <header>
-  <p class="label">$mark</p>
+  $brand
   <h1>$h1</h1>
   <p class="lead">$lead</p>
   <nav class="site-nav" aria-label="$nav_label">$site_nav</nav>

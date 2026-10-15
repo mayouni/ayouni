@@ -270,6 +270,16 @@ def check_site(args):
         words = [label for pat, label in HOUSE_WORDS.items() if re.search(pat, re.sub(r"<[^>]+>", " ", prose), re.I)]
         (rep.fail(f"{rel}: emoji in a reader-visible page") if hits else rep.ok(f"{rel}: no emoji"))
         (rep.fail(f"{rel}: forbidden words: {words}") if words else rep.ok(f"{rel}: no forbidden word"))
+        is_home = rel in (PAGES["index"]["en"], PAGES["index"]["fr"])
+        logo_ok = 'class="logo"' in prose and (site / "assets" / "ayouni-logo.svg").is_file() and \
+            (site / "assets" / "ayouni-logo.svg").read_text(encoding="utf-8").lstrip().startswith("<svg")
+        (rep.ok(f"{rel}: the AYOUNI logo is its SVG") if logo_ok else rep.fail(f"{rel}: the AYOUNI logo (assets/ayouni-logo.svg) is not on the page"))
+        if not is_home:
+            home = re.search(r'<p class="brand"><a href="([^"]*)"', prose)
+            target = resolve(site, rel, home.group(1), address_path) if home else None
+            (rep.ok(f"{rel}: the logo links back to the home page") if target and target.rstrip("/") in
+             {address_path.rstrip("/") + "/" + PAGES["index"][l].rsplit("index.html", 1)[0].rstrip("/") for l in ("en", "fr")}
+                 | {address_path.rstrip("/")} else rep.fail(f"{rel}: the logo must link back to the home page (found {target})"))
         # a request is a resource the page loads; a link is a place the reader may go
         loads = re.findall(r"""<(?:img|script|iframe|source|video|audio)[^>]*\ssrc=["'](https?://[^"']+)""", prose) + \
             re.findall(r"""<link[^>]*\shref=["'](https?://[^"']+)""", prose)
