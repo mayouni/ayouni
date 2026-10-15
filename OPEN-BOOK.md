@@ -39,6 +39,9 @@ has not given, and never gates anything.
   <https://mayouni.github.io/ayouni/assets/ayouni-logo.svg>, traced from the author's logo file; the gradient is part of the file). Wherever a reader
   or a PDF shows the AYOUNI mark, it shows that logo, inlined in a reader so the reader stays one self-contained file. In every reader the logo is also a
   link back to the AYOUNI Press home page, <https://mayouni.github.io/ayouni/>, at the top of the page; a reader must never be a dead end.
+- **One logo, with a red dot** (HOUSE-17). The dot over the final I is red, as in the author's original file (the earlier trace had a purple dot: wrong).
+  A reader page shows the logo once as page chrome, in the header, linking to the home page; the cover image carries its own logo as artwork; no second
+  logo in the hero or elsewhere on the page (the author counted four on one page: too many). A PDF shows it on its cover, title page and back cover only.
 - **Readable at 100% zoom** (HOUSE-15). A reader's body text is at least 20px on a desktop screen at 100% zoom and set in a face that stays legible at that
   size (a Garamond reads small: size it up); no label under 14px; the contrast of body text is at least that of the house pages (#17140f on #fbf8f3).
   The author's test: place the page next to a book page from a publisher's site at 100% zoom; ours must be as easy to read.
