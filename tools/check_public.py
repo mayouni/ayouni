@@ -180,9 +180,11 @@ def check_site(args):
         print(f"\n{slug}")
         dest = site / "books" / slug
         drift = []
+        source_of = {v: k for k, v in book.get("map", {}).items()}  # published path inside the book's folder -> its source path
         for rel, digest in entry["sha256"].items():
             published = site / rel
-            source = folder / rel.split("/", 2)[2]
+            inside = rel.split("/", 2)[2]
+            source = folder / source_of.get(inside, inside)
             if not published.is_file():
                 rep.fail(f"{rel} is in house.json and not in the site")
             elif source.is_file() and published.read_bytes() != source.read_bytes():
@@ -190,9 +192,9 @@ def check_site(args):
         (rep.warn(f"{len(drift)} file(s) differ from the checkout (rebuild): {drift[:3]}") if drift
          else rep.ok(f"{len(entry['sha256'])} published files are the book's own, byte for byte"))
 
-        mf = json.loads((dest / book["manifest"]).read_text(encoding="utf-8"))
-        drafts = sum(1 for c in mf["chapters"] if c["status"] == "draft")
-        if mf.get("edition"):
+        mf = json.loads((dest / book["manifest"]).read_text(encoding="utf-8")) if book.get("manifest") else None
+        drafts = sum(1 for c in mf["chapters"] if c["status"] == "draft") if mf else None
+        if mf and mf.get("edition"):
             names = EDITIONS.get(mf["edition"])
             index = {"en": (site / "index.html").read_text(encoding="utf-8"), "fr": (site / "fr" / "index.html").read_text(encoding="utf-8")}
             if not names:
@@ -203,15 +205,20 @@ def check_site(args):
         for fonts in sorted({p.parent for p in dest.rglob("*.woff2")}):
             (rep.ok(f"{fonts.relative_to(site).as_posix()}: every font family ships with its OFL licence") if list(fonts.glob("OFL*.txt"))
              else rep.fail(f"{fonts.relative_to(site).as_posix()}: font files without an OFL licence text beside them"))
-        for lang, rel in book["readers"].items():
+        for lang, source_rel in book["readers"].items():
+            rel = book.get("map", {}).get(source_rel, source_rel)
             text = (dest / rel).read_text(encoding="utf-8", errors="replace")
-            banners = text.count('class="status-banner st-draft"')
-            (rep.ok(f"{lang} reader: {banners} draft banners for {drafts} draft pages") if banners == drafts
-             else rep.fail(f"{lang} reader: {banners} draft banners for {drafts} draft pages in the manifest"))
             norm = lambda s: re.sub(r"[\W_]+", " ", s.casefold()).strip()
             desc = norm(html.unescape((re.search(r'<meta name="description" content="([^"]*)"', text) or [None, ""])[1]))
-            for key in ("subtitle", "tagline", "series"):
-                want = norm(book[key][lang])
+            if mf:
+                banners = text.count('class="status-banner st-draft"')
+                (rep.ok(f"{lang} reader: {banners} draft banners for {drafts} draft pages") if banners == drafts
+                 else rep.fail(f"{lang} reader: {banners} draft banners for {drafts} draft pages in the manifest"))
+                keys = ("subtitle", "tagline", "series")
+            else:
+                keys = ("subtitle",)  # a book without a manifest: the house's own copy is checked against what the reader says of itself
+            for key in keys:
+                want = norm(book[key][lang] or book[key]["en"])
                 (rep.ok(f"{lang} reader agrees with the house's {key}") if want in desc
                  else rep.fail(f"{lang} reader's description does not contain the house's {key}: {book[key][lang]!r}"))
             hosts = Counter(urlparse(u).netloc + "/" + (urlparse(u).path.split("/")[1] if urlparse(u).path.count("/") > 1 else "")

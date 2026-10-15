@@ -13,7 +13,7 @@ What it does, from site-src/books.json:
   * writes .nojekyll.
 It changes nothing in a book. Then run:  python tools/check_public.py site
 """
-import argparse, hashlib, html, json, re, shutil, subprocess, sys
+import argparse, hashlib, html, json, re, shutil, struct, subprocess, sys
 from datetime import datetime
 from pathlib import Path
 from string import Template
@@ -131,20 +131,34 @@ def copy_file(src, dst, report):
     report[dst] = sha256(dst)
 
 
+def source_files(book):
+    """The files of a book's folder that the house publishes one by one (its directories are added apart)."""
+    rels = [*([book["entry"]] if book.get("entry") else []), *book["readers"].values(), *book.get("files", []),
+            *book.get("extra_files", []), *book.get("covers", {}).values()]
+    return list(dict.fromkeys(rels))
+
+
+def published_path(book, rel):
+    """Where a source file is served inside /books/<slug>/: its own path, unless the registry's `map` moves it."""
+    return book.get("map", {}).get(rel, rel)
+
+
 def publish_book(book, out, report):
     folder = ROOT / book["folder"]
     dest = out / "books" / book["slug"]
-    manifest_path = folder / book["manifest"]
-    if not manifest_path.is_file():
-        die(f"{manifest_path} is missing (is the submodule checked out?)")
-    manifest = json.loads(manifest_path.read_text(encoding="utf-8"))
+    manifest = None
+    if book.get("manifest"):
+        manifest_path = folder / book["manifest"]
+        if not manifest_path.is_file():
+            die(f"{manifest_path} is missing (is the submodule checked out?)")
+        manifest = json.loads(manifest_path.read_text(encoding="utf-8"))
     published = []
-    for rel in [book["entry"], *book["readers"].values(), *book["files"], *book["covers"].values()]:
+    for rel in source_files(book):
         src = folder / rel
         if not src.is_file():
             die(f"{src} is missing")
-        copy_file(src, dest / rel, report)
-        published.append(rel)
+        copy_file(src, dest / published_path(book, rel), report)
+        published.append(published_path(book, rel))
     for d in book.get("dirs", []):
         for src in sorted((folder / d).rglob("*")):
             if src.is_file():
@@ -163,9 +177,17 @@ def book_state(book):
     if tree:
         m = re.match(r"160000 commit ([0-9a-f]{40})\t", tree)
         pinned = m.group(1) if m else None
-    paths = [book["entry"], *book["readers"].values(), *book["files"], *book["covers"].values(), *book.get("dirs", [])]
-    dirty = git("status", "--porcelain", "--", *paths, cwd=folder)
+    dirty = git("status", "--porcelain", "--", *source_files(book), *book.get("dirs", []), cwd=folder)
     return head, pinned, bool(dirty)
+
+
+def png_width_height(path):
+    """A PNG's size, read from its header, so the index never composes a cover's proportions."""
+    with open(path, "rb") as f:
+        head = f.read(24)
+    if head[:8] != b"\x89PNG\r\n\x1a\n":
+        die(f"{path} is not a PNG")
+    return struct.unpack(">II", head[16:24])
 
 
 def count_statuses(manifest):
@@ -179,6 +201,8 @@ def state_line(book, manifest, lang):
     S = STRINGS[lang]
     if not book["publish"]:
         return S["state_none"]
+    if manifest is None:
+        return book["state"][lang]
     counts = count_statuses(manifest)
     n = sum(counts.values())
     words = S["status_word"]
@@ -210,9 +234,12 @@ def render_book(book, manifest, lang):
     if not sub:
         sub, sub_lang = book["subtitle"]["en"], ' lang="en"'
     out = ['<article class="book">']
-    if book["publish"]:
-        w, h = book["cover_size"]["width"], book["cover_size"]["height"]
-        out.append(f'  <img src="{base}books/{slug}/{e(book["covers"][lang])}" width="{w}" height="{h}" decoding="async" '
+    covers = book.get("covers", {})
+    if book["publish"] and covers:
+        cover = covers.get(lang) or covers["en"]
+        pw, ph = png_width_height(ROOT / book["folder"] / cover)
+        w = 140
+        out.append(f'  <img src="{base}books/{slug}/{e(published_path(book, cover))}" width="{w}" height="{round(w * ph / pw)}" decoding="async" '
                    f'alt="{e(S["cover_alt"].format(title=title))}">')
     out.append('  <div class="text">')
     out.append(f'    <p class="label">{e(book["series"][lang])}</p>')
@@ -222,16 +249,17 @@ def render_book(book, manifest, lang):
         out.append(f'    <p class="tagline">{e(book["tagline"][lang])}</p>')
     out.append(f'    <p class="state">{e(state_line(book, manifest, lang))}</p>')
     if book["publish"]:
-        order = ["fr", "en"] if lang == "fr" else ["en", "fr"]
+        order = [l for l in (["fr", "en"] if lang == "fr" else ["en", "fr"]) if l in book["readers"]]
         out.append('    <ul class="links">')
         for l in order:
             lab = S["read_" + l]
             out.append(f'      <li><a href="{base}books/{slug}/{l}/" hreflang="{l}" lang="{l}">{e(lab)}</a></li>')
-        for f in book["files"]:
+        for f in book.get("files", []):
             if f in S["notes"]:
                 out.append(f'      <li><a href="{base}books/{slug}/{f}">{e(f)}</a><span class="note">: {e(S["notes"][f])}</span></li>')
         out.append('    </ul>')
-        out.append(f'    <p class="label">{e(S["built"].format(date=full_date(manifest["built"], lang)))}</p>')
+        if manifest:
+            out.append(f'    <p class="label">{e(S["built"].format(date=full_date(manifest["built"], lang)))}</p>')
     out.append('  </div>')
     out.append('</article>')
     return "\n".join(out)
@@ -279,9 +307,13 @@ def render_llms(reg, manifests, states):
         if not b["publish"]:
             continue
         m = manifests[b["slug"]]
+        base = urljoin(addr, f"books/{b['slug']}/")
+        if m is None:
+            lines += [f"## {b['title']['en']}: {b['subtitle']['en']}", "", b["state"]["en"], "",
+                      f"- [Reader, English]({base}en/)", ""]
+            continue
         counts = count_statuses(m)
         n = sum(counts.values())
-        base = urljoin(addr, f"books/{b['slug']}/")
         lines += [f"## {m['title']}: {m['subtitle']}", "",
                   (f"Edition: {m['edition']}. " if m.get("edition") else "") +
                   f"{n} pages; by status: " + ", ".join(f"{c} {s}" for s, c in sorted(counts.items())) +
@@ -319,7 +351,7 @@ def main():
         manifest, published = publish_book(book, out, report)
         manifests[book["slug"]] = manifest
         for field, key in (("title", "title"), ("subtitle", "subtitle"), ("tagline", "tagline"), ("series", "series")):
-            if book[key]["en"] != manifest[field]:
+            if manifest and book[key]["en"] != manifest[field]:
                 warnings.append(f"{book['slug']}: registry {key} differs from the manifest's; the manifest is right ({manifest[field]!r})")
                 book[key]["en"] = manifest[field]
         head, pinned, dirty = book_state(book)
@@ -343,18 +375,22 @@ def main():
                  "author": book["author"], "series": book["series"]["en"], "published": book["publish"]}
         if book["publish"]:
             base = urljoin(addr, f"books/{book['slug']}/")
-            counts = count_statuses(m)
             entry.update({
-                "pages": sum(counts.values()), "pages_by_status": counts, "edition": m.get("edition"), "built": m["built"],
                 "commit": states[book["slug"]]["commit"], "pinned": states[book["slug"]]["pinned"],
-                "readers": {l: base + p.rsplit("index.html", 1)[0] for l, p in book["readers"].items()},
-                "manifest": base + book["manifest"],
-                "files": {f: base + f for f in book["files"]},
-                "per_page": base + "agents/<slug>.md",
-                "covers": {l: base + p for l, p in book["covers"].items()},
+                "readers": {l: base + published_path(book, p).rsplit("index.html", 1)[0] for l, p in book["readers"].items()},
                 "sha256": {p.relative_to(out).as_posix(): h for p, h in sorted(report.items())
                            if p.relative_to(out).parts[:2] == ("books", book["slug"])},
             })
+            if m:
+                counts = count_statuses(m)
+                entry.update({"pages": sum(counts.values()), "pages_by_status": counts, "edition": m.get("edition"), "built": m["built"],
+                              "manifest": base + book["manifest"], "per_page": base + "agents/<slug>.md"})
+            else:
+                entry["state"] = book["state"]["en"]
+            if book.get("files"):
+                entry["files"] = {f: base + f for f in book["files"]}
+            if book.get("covers"):
+                entry["covers"] = {l: base + published_path(book, p) for l, p in book["covers"].items()}
         books_out.append(entry)
     house_json = {"schema": "ayouni-house-site/1", "built": stamp_now(), "address": addr,
                   "house_commit": git("rev-parse", "HEAD", cwd=ROOT), "books": books_out}
