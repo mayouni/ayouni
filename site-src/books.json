@@ -25,7 +25,7 @@
       "entry": "index.html",
       "readers": { "en": "en/index.html", "fr": "fr/index.html" },
       "files": ["book.json", "book.schema.json", "llms-book.txt", "llms-full-book.txt"],
-      "dirs": ["agents"],
+      "dirs": ["agents", "assets/fonts"],
       "covers": { "en": "assets/cover/cover.png", "fr": "assets/cover/cover.fr.png" },
       "cover_size": { "width": 140, "height": 183 },
       "title": { "en": "Softanza", "fr": "Softanza" },
@@ -33,10 +33,7 @@
       "tagline": { "en": "Declare what you know. A court keeps it. The AI model comes last.", "fr": "Déclarez ce que vous savez, un tribunal le garde, le modèle d'IA vient en dernier." },
       "series": { "en": "Second of the AYOUNI books", "fr": "Deuxième des livres AYOUNI" },
       "author": "Mansour Ayouni",
-      "known_gaps": [
-        { "ref": "status.html", "note": "The reader links ../status.html, the book's status page. It is not published: the author has not ruled on it. It no longer prints this machine's paths, but it names the former host language 175 times in library file names." },
-        { "ref": "assets/fonts/", "note": "The book's assets/fonts folder is empty, so the reader names font files that are not in the repository and falls back to installed or system fonts. Reported to the book session." }
-      ]
+      "known_gaps": []
     }
   ]
 }

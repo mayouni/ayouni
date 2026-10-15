@@ -28,6 +28,12 @@ MONTHS = {
     "fr": ["janvier", "février", "mars", "avril", "mai", "juin", "juillet", "août", "septembre", "octobre", "novembre", "décembre"],
 }
 
+# The manifest's `edition` field, said in each language. The French is the book's own press edition's word for it.
+EDITIONS = {
+    "proof copy": {"en": "Proof copy", "fr": "Épreuve de travail"},
+    "read by the author": {"en": "Read by the author", "fr": "Lu par l'auteur"},
+}
+
 STRINGS = {
     "en": {
         "page_title": "AYOUNI Press",
@@ -178,9 +184,16 @@ def state_line(book, manifest, lang):
     words = S["status_word"]
     if len(counts) == 1:
         (only,) = counts
-        return S["state_all"].format(n=n, status=words.get(only, only))
-    parts = ", ".join(f"{c} {words.get(s, s)}" for s, c in sorted(counts.items()))
-    return S["state_mixed"].format(n=n, parts=parts)
+        line = S["state_all"].format(n=n, status=words.get(only, only))
+    else:
+        parts = ", ".join(f"{c} {words.get(s, s)}" for s, c in sorted(counts.items()))
+        line = S["state_mixed"].format(n=n, parts=parts)
+    edition = manifest.get("edition")
+    if edition:
+        if edition not in EDITIONS:
+            die(f"the manifest names an edition the house does not know: {edition!r}")
+        line = f"{EDITIONS[edition][lang]}. {line}"
+    return line
 
 
 def e(s):
@@ -270,6 +283,7 @@ def render_llms(reg, manifests, states):
         n = sum(counts.values())
         base = urljoin(addr, f"books/{b['slug']}/")
         lines += [f"## {m['title']}: {m['subtitle']}", "",
+                  (f"Edition: {m['edition']}. " if m.get("edition") else "") +
                   f"{n} pages; by status: " + ", ".join(f"{c} {s}" for s, c in sorted(counts.items())) +
                   ". A draft page says so in its banner; the banner is part of the page.", "",
                   f"- [Reader, English]({base}en/)",
@@ -331,7 +345,7 @@ def main():
             base = urljoin(addr, f"books/{book['slug']}/")
             counts = count_statuses(m)
             entry.update({
-                "pages": sum(counts.values()), "pages_by_status": counts, "built": m["built"],
+                "pages": sum(counts.values()), "pages_by_status": counts, "edition": m.get("edition"), "built": m["built"],
                 "commit": states[book["slug"]]["commit"], "pinned": states[book["slug"]]["pinned"],
                 "readers": {l: base + p.rsplit("index.html", 1)[0] for l, p in book["readers"].items()},
                 "manifest": base + book["manifest"],

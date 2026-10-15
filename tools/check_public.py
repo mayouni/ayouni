@@ -21,6 +21,9 @@ from pathlib import Path
 from urllib.parse import urlparse
 
 ROOT = Path(__file__).resolve().parent.parent
+sys.path.insert(0, str(Path(__file__).resolve().parent))
+from build_site import EDITIONS  # the words the index uses for a manifest's `edition`
+
 FORBIDDEN_SUFFIXES = {".pdf", ".epub", ".mobi", ".docx", ".doc", ".pptx", ".xlsx", ".zip", ".7z", ".exe", ".dll"}
 EMOJI = re.compile("[\U0001F300-\U0001FAFF\U00002600-\U000027BF\U0001F000-\U0001F2FF\U0000FE0F\U0000200D]")
 HOUSE_WORDS = {
@@ -189,6 +192,17 @@ def check_site(args):
 
         mf = json.loads((dest / book["manifest"]).read_text(encoding="utf-8"))
         drafts = sum(1 for c in mf["chapters"] if c["status"] == "draft")
+        if mf.get("edition"):
+            names = EDITIONS.get(mf["edition"])
+            index = {"en": (site / "index.html").read_text(encoding="utf-8"), "fr": (site / "fr" / "index.html").read_text(encoding="utf-8")}
+            if not names:
+                rep.fail(f"the manifest names an edition the house does not know: {mf['edition']!r}")
+            else:
+                (rep.ok(f"the index pages name the edition: {names}") if all(names[l] in index[l] for l in index)
+                 else rep.fail(f"the manifest says {mf['edition']!r} and an index page does not"))
+        for fonts in sorted({p.parent for p in dest.rglob("*.woff2")}):
+            (rep.ok(f"{fonts.relative_to(site).as_posix()}: every font family ships with its OFL licence") if list(fonts.glob("OFL*.txt"))
+             else rep.fail(f"{fonts.relative_to(site).as_posix()}: font files without an OFL licence text beside them"))
         for lang, rel in book["readers"].items():
             text = (dest / rel).read_text(encoding="utf-8", errors="replace")
             banners = text.count('class="status-banner st-draft"')
