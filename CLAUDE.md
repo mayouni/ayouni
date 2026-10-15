@@ -13,8 +13,8 @@ Two kinds of session work in this folder:
 | # | Book | Folder | State |
 |---|---|---|---|
 | 0 | *Beginning Ring Programming* (Apress, 2020) | `books/ring-book/` | **archive**: the last files and a study of the writing (`style/`); the source of the writing framework. Its own repository; the manuscript files are Apress's property and never go public (HOUSE-06) |
-| 1 | *Refinement-Oriented Programming* | `books/refinement-book/` | shipped (web reader + PDF); tracked here as plain files; its reader and its PDF are on the house address (HOUSE-10, HOUSE-11) |
-| 2 | *Softanza — The Governed Software Platform of the AI Age* | `books/softanza-book/` | **active**; its own repository, a submodule of the house; all pages `status: draft` |
+| 1 | *Softanza — The Governed Software Platform of the AI Age* | `books/softanza-book/` | **active**; the **first** of the AYOUNI books (HOUSE-13); its own repository, a submodule of the house; all pages `status: draft` |
+| 2 | *Refinement-Oriented Programming* | `books/refinement-book/` | the **second** of the AYOUNI books (HOUSE-13); shipped as the Teaching Edition (web reader + PDF, on the house address, HOUSE-10 and HOUSE-11); tracked here as plain files; **to be rewritten radically in its own session**, Softanza as its technical foundation and Refine a product and IDE |
 
 Unless the author says otherwise, a book session works in its book's folder; the house session works here at the root.
 
