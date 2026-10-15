@@ -23,7 +23,7 @@ from urllib.parse import urlparse
 
 ROOT = Path(__file__).resolve().parent.parent
 sys.path.insert(0, str(Path(__file__).resolve().parent))
-from build_site import EDITIONS, PAGES  # the words the index uses for a manifest's `edition`; where each page of the house lives
+from build_site import EDITIONS, PAGES, STRINGS, invite_text  # the words the index uses; where each page lives; the author's invitation
 
 FORBIDDEN_SUFFIXES = {".pdf", ".epub", ".mobi", ".docx", ".doc", ".pptx", ".xlsx", ".zip", ".7z", ".exe", ".dll"}
 EMOJI = re.compile("[\U0001F300-\U0001FAFF\U00002600-\U000027BF\U0001F000-\U0001F2FF\U0000FE0F\U0000200D]")
@@ -240,6 +240,8 @@ def check_site(args):
             text = (dest / rel).read_text(encoding="utf-8", errors="replace")
             norm = lambda s: re.sub(r"[\W_]+", " ", s.casefold()).strip()
             desc = norm(html.unescape((re.search(r'<meta name="description" content="([^"]*)"', text) or [None, ""])[1]))
+            if re.search(r"(?i)pay what it was worth|payez ce que le livre|payez ce qu'il", text):
+                rep.warn(f"{lang} reader of {slug} still carries the retired ask (HOUSE-12); the book session replaces it with the invitation")
             if mf:
                 banners = text.count('class="status-banner st-draft"')
                 (rep.ok(f"{lang} reader: {banners} draft banners for {drafts} draft pages") if banners == drafts
@@ -285,12 +287,31 @@ def check_site(args):
                 gate = re.findall(r"(?i)<(form|input|script|dialog|iframe)\b", text)
                 (rep.ok(f"{lang} {label}: no form, script, dialog or frame: nothing can gate or nag") if not gate
                  else rep.fail(f"{lang} {label}: {sorted(set(gate))} on a page that must never gate or nag"))
+    contact = reg["house"]["contact"]
+    plain = lambda s: re.sub(r"\s+", " ", html.unescape(re.sub(r"<[^>]+>", "", s))).strip()  # inline tags only: a link inside a sentence
     for lang in ("en", "fr"):
-        text = (site / PAGES["index"][lang]).read_text(encoding="utf-8")
-        ask = text.count('class="ask"')
-        books = text.count('<article class="book">')
-        (rep.ok(f"{lang} index: one ask per book card ({books})") if ask == books
-         else rep.fail(f"{lang} index: {ask} asks for {books} book cards"))
+        want = invite_text(contact, lang)
+        index = (site / PAGES["index"][lang]).read_text(encoding="utf-8")
+        cards = index.count('<article class="book">')
+        invites = [plain(m) for m in re.findall(r'<p class="invite">(.*?)</p>', index, re.S)]
+        (rep.ok(f"{lang} index: one standing invitation per book card ({cards}), word for word") if len(invites) == cards and all(i == want for i in invites)
+         else rep.fail(f"{lang} index: the invitation is not on every card word for word ({len(invites)} for {cards} cards)"))
+        offer = (site / PAGES["offer"][lang]).read_text(encoding="utf-8")
+        (rep.ok(f"{lang} offer page: the standing invitation, word for word") if want in [plain(m) for m in re.findall(r'<p class="invite">(.*?)</p>', offer, re.S)]
+         else rep.fail(f"{lang} offer page does not carry the standing invitation word for word"))
+        mail = f'href="mailto:{contact["email"]}"'
+        (rep.ok(f"{lang} pages: the author's address is a mailto link") if mail in index and mail in offer
+         else rep.fail(f"{lang} index or offer page lacks the mailto link to {contact['email']}"))
+        for key in PAGES:
+            page = (site / PAGES[key][lang]).read_text(encoding="utf-8")
+            footer = plain(re.search(r'<p class="colophon">(.*?)</p>', page, re.S).group(1))
+            (rep.ok(f"{lang} {key}: the colophon line, word for word") if footer == STRINGS[lang]["colophon"]
+             else rep.fail(f"{lang} {key}: the colophon line differs from the house's"))
+    pay = re.compile(r"(?i)pay what it was worth|payez ce que|payez ce qu'il|class=\"(?:ask|button)\"")
+    retired = [rel for langs in PAGES.values() for rel in langs.values() if pay.search((site / rel).read_text(encoding="utf-8"))]
+    retired += ["llms.txt"] if pay.search((site / "llms.txt").read_text(encoding="utf-8")) else []
+    (rep.fail(f"the retired ask (HOUSE-12: there is no payment anywhere) is still on: {retired}") if retired
+     else rep.ok("no ask, no button, no 'pay what it was worth' on the house's pages"))
     llms = (site / "llms.txt").read_text(encoding="utf-8")
     (rep.fail("llms.txt: emoji") if EMOJI.search(llms) else rep.ok("llms.txt: no emoji"))
 

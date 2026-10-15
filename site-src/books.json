@@ -4,6 +4,7 @@
     "mark": "AYOUNI",
     "line": { "en": "AYOUNI Press", "fr": "Éditions AYOUNI" },
     "address": "https://mayouni.github.io/ayouni/",
+    "contact": { "email": "kalidianow@gmail.com", "note": "The author's current address, until he makes a dedicated one (HOUSE-12)." },
     "stzsite": "https://mayouni.github.io/stzsite/",
     "layout": "A reader lives at /books/<slug>/<lang>/. The Softanza readers link the Softanza website by a path four levels up (../../../../stzsite/...), which lands on /stzsite/ only at this depth."
   },

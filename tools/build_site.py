@@ -52,7 +52,7 @@ STRINGS = {
         "lead": "The books of Mansour Ayouni: readers for people, data for AI agents.",
         "lang_label": "Language",
         "nav_label": "The house",
-        "nav": {"index": "Books", "offer": "How these books are offered", "licence": "Licence"},
+        "nav": {"index": "Books", "offer": "Working with the author", "licence": "Licence"},
         "cover_alt": "Cover of {title}",
         "state_all": "{n} pages, all in {status}. Every page carries its draft banner.",
         "state_mixed": "{n} pages: {parts}.",
@@ -69,18 +69,18 @@ STRINGS = {
             "pdf": "the book as a PDF, to read or print",
             "epub": "the book as an ePub",
         },
-        "ask": "If this book was useful to you, and you can, pay what it was worth.",
-        "ask_button": "How to pay what it was worth",
+        "invite": ("If this book is useful to your organisation, I work with organisations on its subjects: paper copies in quantity, "
+                   "workshops and training, talks, consulting and the building of solutions. Write to {email}."),
         "agents_h": "For AI agents",
         "agents_p": ("Each published book is also data, at the same address as its readers: a manifest, a summary, the full text, "
                      "and one file per page (agents/&lt;slug&gt;.md). llms.txt lists them; house.json gives the exact URLs and "
                      "the commit each book was built from."),
         "footer": "AYOUNI Press is the books imprint of AYOUNI.",
-        "colophon": ("Free to read and share under CC BY-NC-ND 4.0; code under the library's licence; "
-                     "pay what it was worth, if it was."),
+        "colophon": "Free to read and share under CC BY-NC-ND 4.0; code under the library's licence.",
         "pages": {
-            "offer": {"title": "How these books are offered", "lead": "Every AYOUNI book is free to read, in every form. Nothing is gated.",
-                      "description": "How AYOUNI Press offers its books: free to read in every form, pay after if it was useful, the paper edition and the author's time sold."},
+            "offer": {"title": "How these books are offered, and how to work with the author",
+                      "lead": "Every AYOUNI book is free to read, in every form. There is no payment. What is sold is the work around the books.",
+                      "description": "How AYOUNI Press offers its books: free to read in every form, no payment; organisations can work with the author on the books' subjects."},
             "licence": {"title": "Licence", "lead": "One licence shape for every AYOUNI book.",
                         "description": "The licence of the AYOUNI books: the text under CC BY-NC-ND 4.0, the code under the library's licence, illustrations as each book says."},
         },
@@ -91,7 +91,7 @@ STRINGS = {
         "lead": "Les livres de Mansour Ayouni : des lecteurs pour les personnes, des données pour les agents d'IA.",
         "lang_label": "Langue",
         "nav_label": "La maison",
-        "nav": {"index": "Les livres", "offer": "Comment ces livres sont offerts", "licence": "Licence"},
+        "nav": {"index": "Les livres", "offer": "Travailler avec l'auteur", "licence": "Licence"},
         "cover_alt": "Couverture de {title}",
         "state_all": "{n} pages, toutes en {status}. Chaque page porte son bandeau de brouillon.",
         "state_mixed": "{n} pages : {parts}.",
@@ -108,18 +108,18 @@ STRINGS = {
             "pdf": "le livre en PDF, à lire ou à imprimer",
             "epub": "le livre en ePub",
         },
-        "ask": "Si ce livre vous a été utile, et si vous le pouvez, payez ce qu'il a valu pour vous.",
-        "ask_button": "Comment payer ce qu'il a valu",
+        "invite": ("Si ce livre est utile à votre organisation, je travaille avec les organisations sur ses sujets : exemplaires papier en quantité, "
+                   "ateliers et formations, conférences, conseil et réalisation de solutions. Écrivez à {email}."),
         "agents_h": "Pour les agents d'IA",
         "agents_p": ("Chaque livre publié est aussi une donnée, à la même adresse que ses lecteurs : un manifeste, un résumé, le texte intégral "
                      "et un fichier par page (agents/&lt;slug&gt;.md). llms.txt les liste ; house.json donne les adresses exactes et "
                      "le commit d'où chaque livre a été construit."),
         "footer": "Éditions AYOUNI est la ligne de livres de la maison AYOUNI.",
-        "colophon": ("Libre à lire et à partager sous CC BY-NC-ND 4.0 ; le code sous la licence de la bibliothèque ; "
-                     "payez ce que le livre a valu, s'il a valu quelque chose."),
+        "colophon": "Libre à lire et à partager sous CC BY-NC-ND 4.0 ; le code sous la licence de la bibliothèque.",
         "pages": {
-            "offer": {"title": "Comment ces livres sont offerts", "lead": "Chaque livre AYOUNI est libre à lire, sous toutes ses formes. Rien n'est verrouillé.",
-                      "description": "Comment Éditions AYOUNI offre ses livres : libres à lire sous toutes leurs formes, à payer après si le livre a servi, l'édition papier et le temps de l'auteur vendus."},
+            "offer": {"title": "Comment ces livres sont offerts, et comment travailler avec l'auteur",
+                      "lead": "Chaque livre AYOUNI est libre à lire, sous toutes ses formes. Il n'y a aucun paiement. Ce qui est vendu, c'est le travail autour des livres.",
+                      "description": "Comment Éditions AYOUNI offre ses livres : libres à lire sous toutes leurs formes, sans paiement ; les organisations peuvent travailler avec l'auteur sur les sujets des livres."},
             "licence": {"title": "Licence", "lead": "Un seul modèle de licence pour chaque livre AYOUNI.",
                         "description": "La licence des livres AYOUNI : le texte sous CC BY-NC-ND 4.0, le code sous la licence de la bibliothèque, les illustrations comme le dit chaque livre."},
         },
@@ -315,7 +315,18 @@ def state_line(book, manifest, lang):
     return line
 
 
-def render_book(book, manifest, lang):
+def invite_text(contact, lang):
+    """The standing invitation, in the author's words, as plain text (the gate compares the pages with it)."""
+    return STRINGS[lang]["invite"].format(email=contact["email"])
+
+
+def invite_html(contact, lang):
+    """The same sentence with the author's address as a mailto link."""
+    before, after = STRINGS[lang]["invite"].split("{email}")
+    return f'{e(before)}<a href="mailto:{e(contact["email"])}">{e(contact["email"])}</a>{e(after)}'
+
+
+def render_book(book, manifest, lang, contact):
     S = STRINGS[lang]
     page = PAGES["index"][lang]
     base = "" if lang == "en" else "../"
@@ -354,8 +365,7 @@ def render_book(book, manifest, lang):
             if f in S["notes"]:
                 out.append(f'      <li><a href="{base}books/{slug}/{f}">{e(f)}</a><span class="note">: {e(S["notes"][f])}</span></li>')
         out.append('    </ul>')
-        out.append(f'    <p class="ask">{e(S["ask"])}</p>')
-        out.append(f'    <p><a class="button" href="{href_to(page, PAGES["offer"][lang])}">{e(S["ask_button"])}</a></p>')
+        out.append(f'    <p class="invite">{invite_html(contact, lang)}</p>')
         if manifest:
             out.append(f'    <p class="label">{e(S["built"].format(date=full_date(manifest["built"], lang)))}</p>')
     out.append('  </div>')
@@ -414,7 +424,8 @@ def render_llms(reg, manifests, states):
              "> The books of Mansour Ayouni, published as readers for people and as data for AI agents. "
              f"In French: {house['line']['fr']}.", "",
              f"{house['mark']} is the house mark; {house['line']['en']} is its books imprint. "
-             "Every book is free to read in every form, nothing is gated; the reader pays after, if it was useful and if they can.", ""]
+             "Every book is free to read in every form; nothing is gated and there is no payment. Organisations can work with the author on the "
+             "books' subjects: see the offer page.", ""]
     for b in reg["books"]:
         if not b["publish"]:
             continue
@@ -439,7 +450,7 @@ def render_llms(reg, manifests, states):
                   f"- [llms-full-book.txt]({base}llms-full-book.txt): every page as text",
                   f"- Per page: {base}agents/<slug>.md (the slugs are in book.json)", ""]
     lines += ["## House", "",
-              f"- [How these books are offered]({urljoin(addr, PAGES['offer']['en'].rsplit('index.html', 1)[0])})",
+              f"- [How these books are offered, and how to work with the author]({urljoin(addr, PAGES['offer']['en'].rsplit('index.html', 1)[0])})",
               f"- [Licence]({urljoin(addr, PAGES['licence']['en'].rsplit('index.html', 1)[0])}): the text under CC BY-NC-ND 4.0",
               f"- [house.json]({urljoin(addr, 'house.json')}): the exact URLs and the commit each book was built from", ""]
     return "\n".join(lines)
@@ -480,7 +491,7 @@ def main():
 
     ordered = sorted(reg["books"], key=lambda b: (not b["publish"], reg["books"].index(b)))
     for lang in ("en", "fr"):
-        books_html = "\n".join(render_book(b, manifests.get(b["slug"]), lang) for b in ordered)
+        books_html = "\n".join(render_book(b, manifests.get(b["slug"]), lang, reg["house"]["contact"]) for b in ordered)
         index_main = books_html + "\n" + render_agents(lang)
         target = out / PAGES["index"][lang]
         target.parent.mkdir(parents=True, exist_ok=True)
@@ -490,7 +501,7 @@ def main():
             fragment = (PAGES_DIR / f"{key}.{lang}.html").read_text(encoding="utf-8")
             main_html = Template(fragment).safe_substitute(
                 home=href_to(page, PAGES["index"][lang]), offer=href_to(page, PAGES["offer"][lang]),
-                licence=href_to(page, PAGES["licence"][lang]))
+                licence=href_to(page, PAGES["licence"][lang]), invite=invite_html(reg["house"]["contact"], lang))
             target = out / page
             target.parent.mkdir(parents=True, exist_ok=True)
             target.write_text(render_page(reg, lang, key, main_html, layout), encoding="utf-8")

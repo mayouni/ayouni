@@ -1,52 +1,54 @@
 # Paper editions: how an AYOUNI book becomes paper
 
-Status: **proposal from the house desk, 2026-10-15.** The author chooses the print-on-demand service and the trim sizes; nothing is ordered,
-no service is signed up to, no price is set. This file says what the records already hold, what the desk proposes, and what each book must
-hand over, so that every book session prepares its press files to one specification.
+Status: **proposal from the house desk, revised 2026-10-15 (HOUSE-12).** The author chooses the printer and the trim sizes; nothing is ordered,
+no service is signed up to. This file says what the records already hold, what the desk proposes, and what each book must hand over, so that
+every book session prepares its press files to one specification.
 
-## The rule (the author's, HOUSE-11)
+## The rule (the author's, HOUSE-11 and HOUSE-12)
 
-Every AYOUNI book is free to read in every form. What is sold is what cannot be copied: the paper edition and the author's time.
+Every AYOUNI book is free to read in every form, and there is no payment in the books or on the site. Paper is part of the work the author does
+with organisations:
 
-- **The paper edition** is industry-grade, printed on demand, and priced at **cost plus a fair margin**.
-- **The supporter's edition** is numbered and signed, and carries the supporter's name in the colophon of the next printing. A name is printed
-  only with the supporter's consent.
+- **Paper copies are supplied to organisations in quantity, on request.** The amount is discussed case by case with each customer, and payment
+  follows ordinary banking. There is no price list and no price rule in the house.
+- **The licence keeps the paper edition the author's**: the text is CC BY-NC-ND 4.0, so no one else may sell it.
+- **A distributor for single copies is for later**, when a structure exists to run one. The model does not need it.
 
 ## What the records hold today
 
 | | *Refinement-Oriented Programming* | *Softanza* |
 |---|---|---|
-| Service planned | IngramSpark, print on demand (its publishing plan) | none named |
+| Service planned | IngramSpark, print on demand (its publishing plan, written before HOUSE-12) | none named |
 | Trim | 6 x 9 in, perfect-bound paperback (its publishing plan); the PDF is built at exactly 6 x 9 in | 6.5 x 8.5 in, the cover's own proportion, full bleed (the book's PRINT-01) |
-| Pages | 107 (PDF rebuilt 2026-10-15, one page more than the 106 of 2026-07-18: the ask page) | 606 English, 628 French (proof copy PDFs, per the book session) |
+| Pages | 107 (PDF rebuilt 2026-10-15, one page more than the 106 of 2026-07-18: the last page before the back cover) | 606 English, 628 French (proof copy PDFs, per the book session) |
 | ISBN | pending | none recorded |
 | Cover art | `web/cover.png`, 1097 x 1434 px | `assets/cover/cover.png`, 1097 x 1434 px |
 
 ## The desk's proposal (for the author to choose)
 
-1. **Service: IngramSpark**, because the author's own publishing plan already names it: worldwide wholesale distribution, no inventory,
-   one master file per edition. Another service is possible; the specification below does not depend on the choice.
+1. **Printer.** One able to print a run of a few dozen to a few hundred copies for an organisation, on request. IngramSpark, which the
+   Refinement book's own plan names, is a candidate because it prints on demand without inventory; a local printer is another. The
+   specification below does not depend on the choice.
 2. **Trim: as each book already is** (Refinement 6 x 9 in; Softanza 6.5 x 8.5 in), unless the author wants one house trim.
-3. **Price rule:** price = the service's printing cost per copy at the book's page count, plus the retailer discount the channel requires,
-   plus a margin the author sets. The house publishes the rule, never an amount the author has not given.
-4. **Supporter's edition:** printed in small numbered runs and signed by the author; the number is on the page that carries the colophon.
+3. **No price in the house.** An order is quoted to the customer by the author, from the printer's cost for that run and the work of the
+   engagement it belongs to.
 
-## What a book hands over (to verify with the chosen service before any order)
+## What a book hands over (to verify with the chosen printer before any order)
 
 - **Interior PDF** at the trim size, fonts embedded, no crop marks: the book's existing press PDF is the starting point.
-- **Cover PDF**: front, spine and back in one file, with bleed. The spine width depends on the page count and the paper; the service's
+- **Cover PDF**: front, spine and back in one file, with bleed. The spine width depends on the page count and the paper; the printer's
   calculator gives it. The back cover carries the ISBN and its barcode.
 - **Cover artwork at print resolution.** The usual requirement is 300 dpi at trim plus bleed. Both current covers are 1097 x 1434 px, which is
   about 160 to 185 dpi at their trims: **a higher-resolution source is needed before paper.** This is a finding, not a decision.
-- **One ISBN per edition** (paper, and any other form that has its own), assigned by the author through the national agency.
-- **A proof copy** ordered and read by the author before the book is listed.
+- **One ISBN per edition**, assigned by the author through the national agency.
+- **A proof copy** ordered and read by the author before any customer receives the book.
 
 ## Order of work
 
-1. The author picks the service and the trims. 2. The book session prepares the files to this file's specification (`release.py` lists
-them). 3. A proof copy is ordered. 4. The author reads it and approves. 5. The book is listed; its card on the house site says so.
+1. The author picks the printer and the trims. 2. The book session prepares the files to this file's specification (`release.py` lists them).
+3. A proof copy is ordered. 4. The author reads it and approves. 5. Copies are supplied to organisations that ask for them.
 
 ## Not decided
 
-The service, the trims, the prices, the ISBNs, the supporter's edition's size and price, and when. The consulting address is on the offer
-page as "to come".
+The printer, the trims, the ISBNs, and when. The consulting and workshop side of the model has no file here: it is the author's work with each
+customer.

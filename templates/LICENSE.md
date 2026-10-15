@@ -48,5 +48,5 @@ The AYOUNI name and wordmark are not covered by these licences and may not be us
 
 Every reader and every PDF of the book carries this line, in the language of the edition:
 
-- English: *Free to read and share under CC BY-NC-ND 4.0; code under the library's licence; pay what it was worth, if it was.*
-- French: *Libre à lire et à partager sous CC BY-NC-ND 4.0 ; le code sous la licence de la bibliothèque ; payez ce que le livre a valu, s'il a valu quelque chose.*
+- English: *Free to read and share under CC BY-NC-ND 4.0; code under the library's licence.*
+- French: *Libre à lire et à partager sous CC BY-NC-ND 4.0 ; le code sous la licence de la bibliothèque.*

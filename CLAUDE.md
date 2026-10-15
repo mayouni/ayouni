@@ -35,10 +35,10 @@ It is its own repository, a submodule of the house like the Softanza book. The p
   switching Pages on. Prepare, then ask. The first three acts were done on 2026-10-14 (DECISIONS HOUSE-03): `mayouni/ayouni`,
   `mayouni/softanza-book` and `mayouni/writing-framework` are public and Pages is on, so from now **every push to them publishes at once**:
   ask first, and ask the book session to tell the desk before it pushes.
-- **The open book (HOUSE-11, `OPEN-BOOK.md`)**: every book is free to read in every form, nothing is gated; the reader pays after, if it was useful;
-  paper and the author's time are sold (`PAPER.md`); the text is CC BY-NC-ND 4.0 (`templates/LICENSE.md`). A PDF or ePub goes online only when the author
-  has said so and `site-src/books.json` lists it under `downloads`; the gate fails on any other. No session names a payment service, an amount or a
-  consulting address the author has not given. Keep every page's draft banner.
+- **The open book (HOUSE-11 and HOUSE-12, `OPEN-BOOK.md`)**: every book is free to read in every form, nothing is gated, and there is no payment
+  anywhere; what is sold is the work around the books, to organisations, by invitation (`PAPER.md` for paper in quantity); the text is CC BY-NC-ND 4.0
+  (`templates/LICENSE.md`). A PDF or ePub goes online only when the author has said so and `site-src/books.json` lists it under `downloads`; the gate
+  fails on any other. No session names an amount, a payment service or an address the author has not given. Keep every page's draft banner.
 
 ## Rules that bind this session
 
