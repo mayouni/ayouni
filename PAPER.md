@@ -18,7 +18,7 @@ Every AYOUNI book is free to read in every form. What is sold is what cannot be 
 |---|---|---|
 | Service planned | IngramSpark, print on demand (its publishing plan) | none named |
 | Trim | 6 x 9 in, perfect-bound paperback (its publishing plan); the PDF is built at exactly 6 x 9 in | 6.5 x 8.5 in, the cover's own proportion, full bleed (the book's PRINT-01) |
-| Pages | 106 (PDF of 2026-07-18) | 606 English, 623 French (proof copy PDFs, per the book session) |
+| Pages | 107 (PDF rebuilt 2026-10-15, one page more than the 106 of 2026-07-18: the ask page) | 606 English, 628 French (proof copy PDFs, per the book session) |
 | ISBN | pending | none recorded |
 | Cover art | `web/cover.png`, 1097 x 1434 px | `assets/cover/cover.png`, 1097 x 1434 px |
 
