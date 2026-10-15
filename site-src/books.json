@@ -10,23 +10,6 @@
   },
   "books": [
     {
-      "slug": "refinement",
-      "folder": "books/refinement-book",
-      "publish": true,
-      "readers": { "en": "web/index.html" },
-      "extra_files": ["web/cover.png"],
-      "map": { "web/index.html": "en/index.html", "web/cover.png": "en/cover.png" },
-      "downloads": [
-        { "kind": "pdf", "lang": "en", "from": "web/book.pdf", "to": "book.pdf", "authority": "HOUSE-11" }
-      ],
-      "title": { "en": "Refinement-Oriented Programming", "fr": "Refinement-Oriented Programming" },
-      "subtitle": { "en": "A discipline for software in the agentic era", "fr": null },
-      "series": { "en": "First of the AYOUNI books", "fr": "Premier des livres AYOUNI" },
-      "state": { "en": "The book as a web reader.", "fr": "Le livre en lecteur web, en anglais." },
-      "author": "Mansour Ayouni",
-      "known_gaps": []
-    },
-    {
       "slug": "softanza",
       "folder": "books/softanza-book",
       "publish": true,
@@ -35,11 +18,36 @@
       "readers": { "en": "en/index.html", "fr": "fr/index.html" },
       "files": ["book.json", "book.schema.json", "llms-book.txt", "llms-full-book.txt"],
       "dirs": ["agents", "assets/fonts"],
+      "downloads": [
+        { "kind": "pdf", "lang": "en", "to": "book.en.pdf", "authority": "HOUSE-11", "local": "print/softanza-en.pdf",
+          "url": "https://github.com/mayouni/softanza-book/releases/download/proof-copy-2026-10-15-2/softanza-en.pdf",
+          "sha256": "194e6643b1f98a98144638546b02b21edd7d01c4a7c837784c110e9f5d9d129b", "bytes": 11738188 },
+        { "kind": "pdf", "lang": "fr", "to": "book.fr.pdf", "authority": "HOUSE-11", "local": "print/softanza-fr.pdf",
+          "url": "https://github.com/mayouni/softanza-book/releases/download/proof-copy-2026-10-15-2/softanza-fr.pdf",
+          "sha256": "73ce56ebe257566ef42a2b0c3290ed34363a5fbbaf133df3d6594dbb3fdc16c5", "bytes": 12070217 }
+      ],
       "covers": { "en": "assets/cover/cover.png", "fr": "assets/cover/cover.fr.png" },
       "title": { "en": "Softanza", "fr": "Softanza" },
       "subtitle": { "en": "The Governed Software Platform of the AI Age", "fr": "La plateforme logicielle gouvernée de l'ère de l'IA" },
       "tagline": { "en": "Declare what you know. A court keeps it. The AI model comes last.", "fr": "Déclarez ce que vous savez, un tribunal le garde, le modèle d'IA vient en dernier." },
+      "series": { "en": "First of the AYOUNI books", "fr": "Premier des livres AYOUNI" },
+      "author": "Mansour Ayouni",
+      "known_gaps": []
+    },
+    {
+      "slug": "refinement",
+      "folder": "books/refinement-book",
+      "publish": true,
+      "readers": { "en": "web/index.html" },
+      "covers": { "en": "web/cover.png" },
+      "map": { "web/index.html": "en/index.html", "web/cover.png": "en/cover.png" },
+      "downloads": [
+        { "kind": "pdf", "lang": "en", "from": "web/book.pdf", "to": "book.pdf", "authority": "HOUSE-11" }
+      ],
+      "title": { "en": "Refinement-Oriented Programming", "fr": "Refinement-Oriented Programming" },
+      "subtitle": { "en": "A discipline for software in the agentic era", "fr": null },
       "series": { "en": "Second of the AYOUNI books", "fr": "Deuxième des livres AYOUNI" },
+      "state": { "en": "The book as a web reader.", "fr": "Le livre en lecteur web, en anglais." },
       "author": "Mansour Ayouni",
       "known_gaps": []
     }
