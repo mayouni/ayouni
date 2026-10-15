@@ -40,6 +40,11 @@ It is its own repository, a submodule of the house like the Softanza book. The p
   (`templates/LICENSE.md`). A PDF or ePub goes online only when the author has said so and `site-src/books.json` lists it under `downloads`; the gate
   fails on any other. No session names an amount, a payment service or an address the author has not given. Keep every page's draft banner.
 
+## How every book session reports (HOUSE-MEMO-01)
+
+Every book session, present and future, reports to the author in the memo format of `writing-framework/templates/memo.md`: by, subject, why,
+did, state, waiting, next, note, the date and time read from the clock, in every substantive message and not only at the end of a phase.
+
 ## Rules that bind this session
 
 Commit by explicit paths, never `git add -A` (a hook refuses it). Never set a book page to `status: read`. Never edit a book's text. Never
