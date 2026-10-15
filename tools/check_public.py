@@ -293,9 +293,16 @@ def check_site(args):
         want = invite_text(contact, lang)
         index = (site / PAGES["index"][lang]).read_text(encoding="utf-8")
         cards = index.count('<article class="book">')
+        published = sum(1 for b in reg["books"] if b["publish"])
+        (rep.ok(f"{lang} index: {cards} book cards for {published} published books") if cards == published
+         else rep.fail(f"{lang} index: {cards} book cards for {published} published books"))
+        covers = index.count('<a class="cover" ')
+        with_cover = sum(1 for b in reg["books"] if b["publish"] and b.get("covers"))
+        (rep.ok(f"{lang} index: every book with a cover shows it, linked to its reader ({covers})") if covers == with_cover
+         else rep.fail(f"{lang} index: {covers} covers shown for {with_cover} books that have one"))
         invites = [plain(m) for m in re.findall(r'<p class="invite">(.*?)</p>', index, re.S)]
-        (rep.ok(f"{lang} index: one standing invitation per book card ({cards}), word for word") if len(invites) == cards and all(i == want for i in invites)
-         else rep.fail(f"{lang} index: the invitation is not on every card word for word ({len(invites)} for {cards} cards)"))
+        (rep.ok(f"{lang} index: the standing invitation once, word for word (HOUSE-14)") if invites == [want]
+         else rep.fail(f"{lang} index: the invitation must appear exactly once, word for word; found {len(invites)}"))
         offer = (site / PAGES["offer"][lang]).read_text(encoding="utf-8")
         (rep.ok(f"{lang} offer page: the standing invitation, word for word") if want in [plain(m) for m in re.findall(r'<p class="invite">(.*?)</p>', offer, re.S)]
          else rep.fail(f"{lang} offer page does not carry the standing invitation word for word"))

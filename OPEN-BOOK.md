@@ -13,7 +13,7 @@ has not given, and never gates anything.
 3. What is **sold is the work around the books, to organisations**: paper copies in quantity, workshops and training, talks and conference
    invitations, consulting and the building of solutions on the books' subjects. Amounts are discussed case by case; payment follows ordinary banking.
 4. **One standing invitation** in the author's voice stands where the ask stood: at the end of each reader after its last chapter, on the last
-   page of each PDF, on the house's book cards and on the offer page.
+   page of each PDF, once on the house's home page (HOUSE-14: not repeated on each book card) and on the offer page.
 5. The text is **CC BY-NC-ND 4.0** (which also keeps the paper edition the author's); code follows the licence of the library it runs against;
    illustrations and covers follow the book's `LICENSE.md`.
 6. The **print icon of a reader opens the book's PDF**, published beside the reader; never a page the browser generates.
@@ -49,6 +49,6 @@ has not given, and never gates anything.
 ## What the house has done
 
 The offer page ("How these books are offered, and how to work with the author") and the licence page, in both languages; the standing invitation
-on every book card and on the offer page; the colophon line in every footer; the PDFs in the registry and the gate (`tools/check_public.py`
+once on the home page, which shows the book covers large and says what the books share once (HOUSE-14), and on the offer page; the colophon line in every footer; the PDFs in the registry and the gate (`tools/check_public.py`
 allows only the PDFs the registry lists, checks each is the book's own file or the pinned release asset, that the reader's print icon opens it,
 and that the invitation and the colophon line are on the pages word for word, with no ask left); `PAPER.md`; `templates/LICENSE.md`; this file.

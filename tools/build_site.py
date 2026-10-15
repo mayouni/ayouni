@@ -71,6 +71,8 @@ STRINGS = {
         },
         "invite": ("If this book is useful to your organisation, I work with organisations on its subjects: paper copies in quantity, "
                    "workshops and training, talks, consulting and the building of solutions. Write to {email}."),
+        "work_h": "Working with the author",
+        "work_more": "How these books are offered",
         "agents_h": "For AI agents",
         "agents_p": ("Each published book is also data, at the same address as its readers: a manifest, a summary, the full text, "
                      "and one file per page (agents/&lt;slug&gt;.md). llms.txt lists them; house.json gives the exact URLs and "
@@ -110,6 +112,8 @@ STRINGS = {
         },
         "invite": ("Si ce livre est utile à votre organisation, je travaille avec les organisations sur ses sujets : exemplaires papier en quantité, "
                    "ateliers et formations, conférences, conseil et réalisation de solutions. Écrivez à {email}."),
+        "work_h": "Travailler avec l'auteur",
+        "work_more": "Comment ces livres sont offerts",
         "agents_h": "Pour les agents d'IA",
         "agents_p": ("Chaque livre publié est aussi une donnée, à la même adresse que ses lecteurs : un manifeste, un résumé, le texte intégral "
                      "et un fichier par page (agents/&lt;slug&gt;.md). llms.txt les liste ; house.json donne les adresses exactes et "
@@ -326,9 +330,10 @@ def invite_html(contact, lang):
     return f'{e(before)}<a href="mailto:{e(contact["email"])}">{e(contact["email"])}</a>{e(after)}'
 
 
-def render_book(book, manifest, lang, contact):
+def render_book(book, manifest, lang):
+    """One book on the home page: its cover first and large, as the way into the reader; then what it is; then the ways to read it.
+    What every book shares (the invitation, the data files, the licence) is said once, below the books."""
     S = STRINGS[lang]
-    page = PAGES["index"][lang]
     base = "" if lang == "en" else "../"
     slug = book["slug"]
     title = book["title"][lang] or book["title"]["en"]
@@ -336,14 +341,16 @@ def render_book(book, manifest, lang, contact):
     sub_lang = ""
     if not sub:
         sub, sub_lang = book["subtitle"]["en"], ' lang="en"'
+    order = [l for l in (["fr", "en"] if lang == "fr" else ["en", "fr"]) if l in book["readers"]]
     out = ['<article class="book">']
     covers = book.get("covers", {})
     if book["publish"] and covers:
         cover = covers.get(lang) or covers["en"]
         pw, ph = png_width_height(ROOT / book["folder"] / cover)
-        w = 140
-        out.append(f'  <img src="{base}books/{slug}/{e(published_path(book, cover))}" width="{w}" height="{round(w * ph / pw)}" decoding="async" '
-                   f'alt="{e(S["cover_alt"].format(title=title))}">')
+        w = 340
+        out.append(f'  <a class="cover" href="{base}books/{slug}/{order[0]}/" hreflang="{order[0]}">'
+                   f'<img src="{base}books/{slug}/{e(published_path(book, cover))}" width="{w}" height="{round(w * ph / pw)}" decoding="async" '
+                   f'alt="{e(S["cover_alt"].format(title=title))}"></a>')
     out.append('  <div class="text">')
     out.append(f'    <p class="label">{e(book["series"][lang])}</p>')
     out.append(f'    <h2>{e(title)}</h2>')
@@ -352,20 +359,14 @@ def render_book(book, manifest, lang, contact):
         out.append(f'    <p class="tagline">{e(book["tagline"][lang])}</p>')
     out.append(f'    <p class="state">{e(state_line(book, manifest, lang))}</p>')
     if book["publish"]:
-        order = [l for l in (["fr", "en"] if lang == "fr" else ["en", "fr"]) if l in book["readers"]]
-        out.append('    <ul class="links">')
+        out.append('    <ul class="links inline">')
         for l in order:
             out.append(f'      <li><a href="{base}books/{slug}/{l}/" hreflang="{l}" lang="{l}">{e(S["read_" + l])}</a></li>')
         downloads = book.get("downloads", [])
         for d in downloads:
             label = d["kind"].upper() if len(downloads) == 1 else f'{d["kind"].upper()} ({S["langs"][d["lang"]]})'
-            out.append(f'      <li><a href="{base}books/{slug}/{e(d["to"])}" hreflang="{d["lang"]}">{e(label)}</a>'
-                       f'<span class="note">: {e(S["notes"][d["kind"]])}</span></li>')
-        for f in book.get("files", []):
-            if f in S["notes"]:
-                out.append(f'      <li><a href="{base}books/{slug}/{f}">{e(f)}</a><span class="note">: {e(S["notes"][f])}</span></li>')
+            out.append(f'      <li><a href="{base}books/{slug}/{e(d["to"])}" hreflang="{d["lang"]}">{e(label)}</a></li>')
         out.append('    </ul>')
-        out.append(f'    <p class="invite">{invite_html(contact, lang)}</p>')
         if manifest:
             out.append(f'    <p class="label">{e(S["built"].format(date=full_date(manifest["built"], lang)))}</p>')
     out.append('  </div>')
@@ -373,14 +374,30 @@ def render_book(book, manifest, lang, contact):
     return "\n".join(out)
 
 
-def render_agents(lang):
+def render_work(contact, lang):
+    """The standing invitation, once, for every book (HOUSE-14)."""
+    S = STRINGS[lang]
+    page = PAGES["index"][lang]
+    return "\n".join([
+        '<section class="work">', '  <div class="text">', f'    <h2>{e(S["work_h"])}</h2>',
+        f'    <p class="invite">{invite_html(contact, lang)}</p>',
+        f'    <p><a href="{href_to(page, PAGES["offer"][lang])}">{e(S["work_more"])}</a></p>', '  </div>', '</section>'])
+
+
+def render_agents(reg, lang):
+    """The data of every published book, once: what it is in one paragraph, then the files of each book."""
     S = STRINGS[lang]
     base = "" if lang == "en" else "../"
+    items = [f'      <li><a href="{base}llms.txt">llms.txt</a>, <a href="{base}house.json">house.json</a></li>']
+    for b in reg["books"]:
+        files = [f for f in b.get("files", []) if f in S["notes"]]
+        if b["publish"] and files:
+            title = b["title"][lang] or b["title"]["en"]
+            links = ", ".join(f'<a href="{base}books/{b["slug"]}/{f}">{e(f)}</a>' for f in files)
+            items.append(f'      <li>{e(title)}: {links}</li>')
     return "\n".join([
         '<section class="agents">', '  <div class="text">', f'    <h2>{e(S["agents_h"])}</h2>', f'    <p>{S["agents_p"]}</p>',
-        '    <ul class="links">',
-        f'      <li><a href="{base}llms.txt">llms.txt</a></li>', f'      <li><a href="{base}house.json">house.json</a></li>',
-        '    </ul>', '  </div>', '</section>'])
+        '    <ul class="links">', *items, '    </ul>', '  </div>', '</section>'])
 
 
 def render_page(reg, lang, key, main, layout):
@@ -411,6 +428,7 @@ def render_page(reg, lang, key, main, layout):
         site_nav=nav,
         lang_label=e(S["lang_label"]),
         lang_switch=switch,
+        body_class="home" if key == "index" else "page",
         main=main,
         footer=e(S["footer"]),
         colophon=e(S["colophon"]),
@@ -491,8 +509,9 @@ def main():
 
     ordered = sorted(reg["books"], key=lambda b: (not b["publish"], reg["books"].index(b)))
     for lang in ("en", "fr"):
-        books_html = "\n".join(render_book(b, manifests.get(b["slug"]), lang, reg["house"]["contact"]) for b in ordered)
-        index_main = books_html + "\n" + render_agents(lang)
+        books_html = "\n".join(render_book(b, manifests.get(b["slug"]), lang) for b in ordered)
+        index_main = ('<div class="books">\n' + books_html + '\n</div>\n' + render_work(reg["house"]["contact"], lang) + "\n"
+                      + render_agents(reg, lang))
         target = out / PAGES["index"][lang]
         target.parent.mkdir(parents=True, exist_ok=True)
         target.write_text(render_page(reg, lang, "index", index_main, layout), encoding="utf-8")
