@@ -13,7 +13,7 @@ Two kinds of session work in this folder:
 | # | Book | Folder | State |
 |---|---|---|---|
 | 0 | *Beginning Ring Programming* (Apress, 2020) | `books/ring-book/` | **archive**: the last files and a study of the writing (`style/`); the source of the writing framework. Its own repository; the manuscript files are Apress's property and never go public (HOUSE-06) |
-| 1 | *Refinement-Oriented Programming* | `books/refinement-book/` | shipped (web reader + PDF); tracked here as plain files, PDFs excluded; its reader is not on the house address yet |
+| 1 | *Refinement-Oriented Programming* | `books/refinement-book/` | shipped (web reader + PDF); tracked here as plain files, PDFs excluded; its reader is on the house address (HOUSE-10) |
 | 2 | *Softanza — The Governed Software Platform of the AI Age* | `books/softanza-book/` | **active**; its own repository, a submodule of the house; all pages `status: draft` |
 
 Unless the author says otherwise, a book session works in its book's folder; the house session works here at the root.
@@ -25,7 +25,7 @@ It is its own repository, a submodule of the house like the Softanza book. The p
 ## Publication (the house session's work)
 
 - Address: `https://mayouni.github.io/ayouni/`, repository `mayouni/ayouni`, public. A book is at `/books/<slug>/en/` and `/books/<slug>/fr/`,
-  with its covers, `book.json`, `llms-*.txt` and `agents/` under `/books/<slug>/`. Today's slugs: `softanza`.
+  with its covers, `book.json`, `llms-*.txt` and `agents/` under `/books/<slug>/`. Today's slugs: `refinement` (English only), `softanza`.
 - A book is a git **submodule**: it keeps its own repository and history; the house pins one commit. A book goes online, or changes online,
   only when a commit of the house moves its pointer.
 - `python tools/build_site.py` assembles `site/` (ignored by git) from the pinned books; `python tools/check_public.py site` is the gate

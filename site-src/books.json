@@ -11,11 +11,16 @@
     {
       "slug": "refinement",
       "folder": "books/refinement-book",
-      "publish": false,
+      "publish": true,
+      "readers": { "en": "web/index.html" },
+      "extra_files": ["web/cover.png"],
+      "map": { "web/index.html": "en/index.html", "web/cover.png": "en/cover.png" },
       "title": { "en": "Refinement-Oriented Programming", "fr": "Refinement-Oriented Programming" },
       "subtitle": { "en": "A discipline for software in the agentic era", "fr": null },
       "series": { "en": "First of the AYOUNI books", "fr": "Premier des livres AYOUNI" },
-      "author": "Mansour Ayouni"
+      "state": { "en": "The book as a web reader.", "fr": "Le livre en lecteur web, en anglais." },
+      "author": "Mansour Ayouni",
+      "known_gaps": []
     },
     {
       "slug": "softanza",
@@ -27,7 +32,6 @@
       "files": ["book.json", "book.schema.json", "llms-book.txt", "llms-full-book.txt"],
       "dirs": ["agents", "assets/fonts"],
       "covers": { "en": "assets/cover/cover.png", "fr": "assets/cover/cover.fr.png" },
-      "cover_size": { "width": 140, "height": 183 },
       "title": { "en": "Softanza", "fr": "Softanza" },
       "subtitle": { "en": "The Governed Software Platform of the AI Age", "fr": "La plateforme logicielle gouvernée de l'ère de l'IA" },
       "tagline": { "en": "Declare what you know. A court keeps it. The AI model comes last.", "fr": "Déclarez ce que vous savez, un tribunal le garde, le modèle d'IA vient en dernier." },
