@@ -16,5 +16,9 @@ site/
 *.epub
 
 # Beginning Ring Programming (Apress, 2020): the manuscript files are Apress's property and never go public (HOUSE-06).
-# The archive is a repository of its own; until the author gives his word to detach it, nothing of it is tracked here.
-books/ring-book/
+# The archive keeps its own history in a git directory kept outside the house (HOUSE-06, HOUSE-09);
+# the house tracks only its README, its CLAUDE.md and the study of the writing.
+books/ring-book/*
+!books/ring-book/README.md
+!books/ring-book/CLAUDE.md
+!books/ring-book/style/

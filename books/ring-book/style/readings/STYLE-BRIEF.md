@@ -1,0 +1,18 @@
+# Brief: read Mansour Ayouni's Ring book chapters for their writing style
+
+You are reading chapters of *Beginning Ring Programming* (Apress, 2020) by Mansour Ayouni, extracted from the author's last Word files to Markdown-ish text
+(folder `C:\Users\ASUSV3~1\AppData\Local\Temp\claude\D--GitHub-ayouni\88992b14-3a52-43bb-a199-d50e9b5ab27a\scratchpad\ringbook\`; code lines are indented four spaces; `#` lines are headings; `>` lines are notes/tips).
+The author will use your reading to describe his own writing style and patterns, so that his later books (written with AI agents) keep what is genuinely his. Read the WHOLE text you are given; do not skim.
+
+Report, as your final message (under 1,200 words), with short verbatim quotes (under 20 words each, with the heading they sit under) as evidence for every point. No praise, no generalities: a pattern is a thing you saw three times or more, or once in a place that matters (an opening, a close).
+
+1. **Shape of a chapter.** How it opens (first 3 paragraphs: what move does each make?), how sections are built, how it closes. Recurring fixed parts (a summary, a "things you learned", exercises, a story, a figure per concept?). The ratio of prose to code and how code is placed (before or after the explanation? how long are listings?).
+2. **The teaching moves.** The sequence the author uses to introduce a concept: example first? question first? a wrong version first? a metaphor first? a definition? When does he name a thing: before or after showing it? How does he handle a reader's likely mistake or confusion? How does he handle the limits of the language (what it cannot do, what is ugly)?
+3. **Voice and address.** Who speaks (I / we / you), when each pronoun appears and for what job. Tone: where it is playful, where it is grave. Humour: what kind, how often, examples. Direct questions to the reader: how used. Exclamations. Imperatives ("Open your editor", "Try it").
+4. **The images.** Metaphors, analogies, stories, characters (there seems to be a cast: Ringoria, personas, a map, a journey) and recurring scenes; cultural and personal references (Tunisia, North Africa, Carthage, family, cooking, music, Arabic, French); how a metaphor is introduced, sustained and dropped. Which metaphors carry real explanatory weight versus decoration.
+5. **Sentence and paragraph craft.** Typical sentence length and rhythm (short–long alternation? triads? one-sentence paragraphs?), favourite connectives and openers ("Now,", "In fact,", "Actually,", "Let's"), punctuation habits (colons, dashes, parentheses, semicolons), favourite words and phrases (list the ten most characteristic with counts if you can), naming of code elements in prose. Weaknesses or tics a careful editor would cut (over-long sentences, repetition, hedging, over-explanation, exclamation marks, "very", "simply", "just"): give examples honestly.
+6. **Structure of explanation.** How he moves from the concrete to the general, how he uses tables, lists, figures, "notes" and "tips"; whether he states a principle first or extracts it after; how he handles numbers and facts (sourced? dated?); honesty markers ("I don't know", "this is a limitation", "in my experience").
+7. **Three exemplary passages** of this chapter, quoted (each under 60 words), that are the most *him*: the voice at its best. And one passage that is the voice at its weakest, quoted, with the reason.
+8. **What an AI would get wrong** imitating this: the two or three features that are easiest to fake badly, and what is the hard-to-fake core.
+
+Write exact headings as locators ("§ Hello Ring", "the opening"). Do not quote more than you need. Do not invent anything the text does not contain.
