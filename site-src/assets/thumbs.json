@@ -1,0 +1,20 @@
+{
+  "softanza.en.jpg": {
+    "source": "books/softanza-book/assets/cover/cover.png",
+    "sha256": "529b0e4a5fd3df90fe6d1179127548d8eb7be99a45de13228aeb34e1d701af7f",
+    "width": 880,
+    "height": 1150
+  },
+  "softanza.fr.jpg": {
+    "source": "books/softanza-book/assets/cover/cover.fr.png",
+    "sha256": "2ad2abe29f8ae0d65056a5ae2f7f3169e0824f567c9d53a8eaa50d667bfd0cc3",
+    "width": 880,
+    "height": 1150
+  },
+  "refinement.en.jpg": {
+    "source": "books/refinement-book/web/cover.png",
+    "sha256": "b617c6dcbef06de6774390f7bfe59e8d281991b3ea9ac4fa2019f6cfa61824f9",
+    "width": 880,
+    "height": 1150
+  }
+}

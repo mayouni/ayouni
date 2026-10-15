@@ -330,6 +330,24 @@ def invite_html(contact, lang):
     return f'{e(before)}<a href="mailto:{e(contact["email"])}">{e(contact["email"])}</a>{e(after)}'
 
 
+THUMBS_DIR = ROOT / "site-src" / "assets" / "thumbs"
+THUMBS_JSON = ROOT / "site-src" / "assets" / "thumbs.json"
+THUMBS_USED, THUMBS_STALE = set(), set()
+
+
+def thumb_for(book, lang, cover_rel):
+    """The home page's small cover for a book, while it was made from exactly the cover being published (tools/make_thumbs.py)."""
+    if not THUMBS_JSON.is_file():
+        return None
+    name = f"{book['slug']}.{lang}.jpg"
+    info = json.loads(THUMBS_JSON.read_text(encoding="utf-8")).get(name)
+    if info and (THUMBS_DIR / name).is_file() and info["sha256"] == sha256(ROOT / book["folder"] / cover_rel):
+        THUMBS_USED.add(name)
+        return {"name": name, "width": info["width"], "height": info["height"]}
+    THUMBS_STALE.add(name)
+    return None
+
+
 def render_book(book, manifest, lang):
     """One book on the home page: its cover first and large, as the way into the reader; then what it is; then the ways to read it.
     What every book shares (the invitation, the data files, the licence) is said once, below the books."""
@@ -346,10 +364,15 @@ def render_book(book, manifest, lang):
     covers = book.get("covers", {})
     if book["publish"] and covers:
         cover = covers.get(lang) or covers["en"]
-        pw, ph = png_width_height(ROOT / book["folder"] / cover)
-        w = 340
+        cover_lang = lang if lang in covers else "en"
+        thumb = thumb_for(book, cover_lang, cover)
+        if thumb:
+            src, (w, h) = f'{base}assets/thumbs/{thumb["name"]}', (thumb["width"], thumb["height"])
+        else:
+            pw, ph = png_width_height(ROOT / book["folder"] / cover)
+            src, (w, h) = f'{base}books/{slug}/{e(published_path(book, cover))}', (340, round(340 * ph / pw))
         out.append(f'  <a class="cover" href="{base}books/{slug}/{order[0]}/" hreflang="{order[0]}">'
-                   f'<img src="{base}books/{slug}/{e(published_path(book, cover))}" width="{w}" height="{round(w * ph / pw)}" decoding="async" '
+                   f'<img src="{src}" width="{w}" height="{h}" decoding="async" '
                    f'alt="{e(S["cover_alt"].format(title=title))}"></a>')
     out.append('  <div class="text">')
     out.append(f'    <p class="label">{e(book["series"][lang])}</p>')
@@ -539,6 +562,11 @@ def main():
     (out / ".nojekyll").write_text("", encoding="utf-8")
     (out / LOGO_PATH).parent.mkdir(parents=True, exist_ok=True)
     shutil.copyfile(LOGO, out / LOGO_PATH)
+    for name in sorted(THUMBS_USED):
+        (out / "assets" / "thumbs").mkdir(parents=True, exist_ok=True)
+        shutil.copyfile(THUMBS_DIR / name, out / "assets" / "thumbs" / name)
+    for name in sorted(THUMBS_STALE - THUMBS_USED):
+        warnings.append(f"the thumbnail {name} is not made from the cover being published; the full cover is used (run tools/make_thumbs.py)")
 
     addr = reg["house"]["address"]
     books_out = []

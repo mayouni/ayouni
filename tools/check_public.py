@@ -306,6 +306,13 @@ def check_site(args):
         published = sum(1 for b in reg["books"] if b["publish"])
         (rep.ok(f"{lang} index: {cards} book cards for {published} published books") if cards == published
          else rep.fail(f"{lang} index: {cards} book cards for {published} published books"))
+        heavy = []
+        for src in re.findall(r'<a class="cover"[^>]*><img src="([^"]+)"', index):
+            f = (site / PAGES["index"][lang]).parent / src
+            if f.is_file() and f.stat().st_size > 500 << 10:
+                heavy.append(f"{src} ({f.stat().st_size >> 10} KB)")
+        (rep.warn(f"{lang} index: card covers over 500 KB, run tools/make_thumbs.py after a cover changes: {heavy}") if heavy
+         else rep.ok(f"{lang} index: every card cover is light (under 500 KB)"))
         covers = index.count('<a class="cover" ')
         with_cover = sum(1 for b in reg["books"] if b["publish"] and b.get("covers"))
         (rep.ok(f"{lang} index: every book with a cover shows it, linked to its reader ({covers})") if covers == with_cover
