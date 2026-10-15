@@ -7,14 +7,15 @@
 What it does, from site-src/books.json:
   * copies each published book's readers, manifest, agents' files, covers and registered downloads, byte for byte (no page is
     rewritten, so every draft banner survives); a PDF or ePub is copied only when the registry lists it under `downloads` with the
-    decision that allows it; any other file type the house does not publish stops the build;
+    decision that allows it: from the book's folder (`from`), or from a release asset (`url`) whose sha256 and size the registry pins, so
+    a large PDF is never committed; any other file type the house does not publish stops the build;
   * writes the index of the books, the offer page and the licence page, in English and French, from site-src/layout.tmpl.html and
     site-src/pages/, reading titles, counts, editions and stamps from each book's own manifest, never composing them;
   * writes llms.txt and house.json (the exact URLs, the commit each book was built from, the sha256 of what was copied);
   * writes .nojekyll.
 It changes nothing in a book. Then run:  python tools/check_public.py site
 """
-import argparse, hashlib, html, json, posixpath, re, shutil, struct, subprocess, sys
+import argparse, hashlib, html, json, posixpath, re, shutil, struct, subprocess, sys, urllib.request
 from datetime import datetime
 from pathlib import Path
 from string import Template
@@ -221,18 +222,44 @@ def publish_book(book, out, report):
                 copy_file(src, dest / rel, report)
                 published.append(rel)
     for d in book.get("downloads", []):
-        src = folder / d["from"]
+        suffix = Path(d["to"]).suffix.lower()
+        if suffix not in DOWNLOAD_SUFFIXES or d.get("kind") != suffix.lstrip("."):
+            die(f"{d['to']}: a download is a .pdf or .epub whose registry `kind` says so")
+        if not d.get("authority"):
+            die(f"{d['to']}: a download needs its `authority`, the decision of the author that allows it")
+        src = folder / d["from"] if d.get("from") else fetch_download(d, folder)
         if not src.is_file():
             die(f"{src} is missing")
-        if src.suffix.lower() not in DOWNLOAD_SUFFIXES or d.get("kind") != src.suffix.lower().lstrip("."):
-            die(f"{src}: a download is a .pdf or .epub whose registry `kind` says so")
-        if not d.get("authority"):
-            die(f"{src}: a download needs its `authority`, the decision of the author that allows it")
-        if src.suffix.lower() == ".pdf" and src.read_bytes()[:5] != b"%PDF-":
+        if suffix == ".pdf" and src.read_bytes()[:5] != b"%PDF-":
             die(f"{src} is not a PDF")
         copy_file(src, dest / d["to"], report, allow_download=True)
         published.append(d["to"])
     return manifest, published
+
+
+def fetch_download(d, folder):
+    """A download that lives outside the repository (a release asset of the book's repository): the registry pins its sha256 and size,
+    so what is served is exactly what the author's decision named, whoever hosts it. Found, in order, at `local` (a build on this machine,
+    used when its hash matches), in the cache, or fetched from `url`."""
+    want, size = d["sha256"], d["bytes"]
+    local = folder / d["local"] if d.get("local") else None
+    if local and local.is_file() and sha256(local) == want:
+        return local
+    cache = ROOT / ".cache" / "downloads" / f"{want}{Path(d['to']).suffix.lower()}"
+    if cache.is_file() and sha256(cache) == want:
+        return cache
+    cache.parent.mkdir(parents=True, exist_ok=True)
+    print(f"build_site: fetching {d['url']}")
+    try:
+        with urllib.request.urlopen(urllib.request.Request(d["url"], headers={"User-Agent": "ayouni-build-site"}), timeout=120) as r, open(cache, "wb") as f:
+            shutil.copyfileobj(r, f)
+    except OSError as ex:
+        die(f"cannot fetch {d['url']}: {ex}")
+    if cache.stat().st_size != size or sha256(cache) != want:
+        found = f"{cache.stat().st_size} bytes, sha256 {sha256(cache)}"
+        cache.unlink()
+        die(f"{d['url']} is not the file the registry pins ({size} bytes, sha256 {want}); found {found}")
+    return cache
 
 
 def book_state(book):
@@ -244,7 +271,7 @@ def book_state(book):
     if tree:
         m = re.match(r"160000 commit ([0-9a-f]{40})\t", tree)
         pinned = m.group(1) if m else None
-    paths = [*source_files(book), *book.get("dirs", []), *[d["from"] for d in book.get("downloads", [])]]
+    paths = [*source_files(book), *book.get("dirs", []), *[d["from"] for d in book.get("downloads", []) if d.get("from")]]
     dirty = git("status", "--porcelain", "--", *paths, cwd=folder)
     return head, pinned, bool(dirty)
 
@@ -496,6 +523,7 @@ def main():
                 entry["covers"] = {l: base + published_path(book, p) for l, p in book["covers"].items()}
             if book.get("downloads"):
                 entry["downloads"] = [{"kind": d["kind"], "lang": d["lang"], "url": base + d["to"], "authority": d["authority"],
+                                       "hosted_at": d.get("url") or "the repository",
                                        "bytes": (out / "books" / book["slug"] / d["to"]).stat().st_size,
                                        "sha256": report[out / "books" / book["slug"] / d["to"]]} for d in book["downloads"]]
         books_out.append(entry)

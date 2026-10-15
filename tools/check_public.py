@@ -16,7 +16,7 @@ history: a first push publishes every commit, so this reads every blob ever comm
 
 Exit 1 when a gate fails. Warnings are for the author to read; --strict makes them fail too.
 """
-import argparse, html, json, posixpath, re, subprocess, sys, threading
+import argparse, hashlib, html, json, posixpath, re, subprocess, sys, threading
 from collections import Counter
 from pathlib import Path
 from urllib.parse import urlparse
@@ -50,7 +50,7 @@ STZSITE_PREFIX = "/stzsite/"
 def registered_downloads():
     """Repository paths of the PDFs and ePubs the registry lists, each allowed by a decision of the author."""
     reg = json.loads((ROOT / "site-src" / "books.json").read_text(encoding="utf-8"))
-    return {f"{b['folder']}/{d['from']}" for b in reg["books"] if b["publish"] for d in b.get("downloads", [])}
+    return {f"{b['folder']}/{d['from']}" for b in reg["books"] if b["publish"] for d in b.get("downloads", []) if d.get("from")}
 
 
 class Report:
@@ -213,7 +213,7 @@ def check_site(args):
                 (rep.ok(f"the index pages name the edition: {names}") if all(names[l] in index[l] for l in index)
                  else rep.fail(f"the manifest says {mf['edition']!r} and an index page does not"))
         for d in book.get("downloads", []):
-            served, source = dest / d["to"], folder / d["from"]
+            served, source = dest / d["to"], (folder / d["from"] if d.get("from") else None)
             where = f"books/{slug}/{d['to']}"
             if not served.is_file():
                 rep.fail(f"{where}: registered download is not in the site")
@@ -221,10 +221,13 @@ def check_site(args):
             data = served.read_bytes()
             if d["kind"] == "pdf" and data[:5] != b"%PDF-":
                 rep.fail(f"{where}: not a PDF")
-            elif source.is_file() and data != source.read_bytes():
+            elif d.get("sha256") and (hashlib.sha256(data).hexdigest() != d["sha256"] or len(data) != d["bytes"]):
+                rep.fail(f"{where}: is not the file the registry pins ({d['bytes']} bytes, sha256 {d['sha256'][:12]}...)")
+            elif source is not None and source.is_file() and data != source.read_bytes():
                 rep.warn(f"{where}: differs from the checkout (rebuild)")
             else:
-                rep.ok(f"{where}: the book's own {d['kind'].upper()}, {len(data) >> 10} KB, allowed by {d['authority']}")
+                how = "pinned by sha256 in the registry" if d.get("sha256") else "the book's own file"
+                rep.ok(f"{where}: the book's {d['kind'].upper()}, {len(data) >> 10} KB, {how}, allowed by {d['authority']}")
             names = [lang for lang, src in book["readers"].items()
                      if f"../{d['to']}" in (dest / book.get("map", {}).get(src, src)).read_text(encoding="utf-8", errors="replace")]
             (rep.ok(f"the reader's print button opens it ({d['lang']}: ../{d['to']})") if names
@@ -250,8 +253,9 @@ def check_site(args):
                  else rep.fail(f"{lang} reader's description does not contain the house's {key}: {book[key][lang]!r}"))
             hosts = Counter(urlparse(u).netloc + "/" + (urlparse(u).path.split("/")[1] if urlparse(u).path.count("/") > 1 else "")
                             for u in re.findall(r"(?:src|href)=[\"'](https?://[^\"']+)", text))
-            foreign = {h: n for h, n in hosts.items() if not h.startswith("github.com/mayouni")}
-            (rep.warn(f"{lang} reader calls other hosts: {foreign}") if foreign else rep.ok(f"{lang} reader links only github.com/mayouni ({sum(hosts.values())} links)"))
+            foreign = {h: n for h, n in hosts.items() if not h.startswith(("github.com/mayouni", "mayouni.github.io/ayouni"))}
+            (rep.warn(f"{lang} reader calls other hosts: {foreign}") if foreign
+             else rep.ok(f"{lang} reader links only github.com/mayouni and the house ({sum(hosts.values())} links)"))
             check_links(rep, site, reg, address_path, f"books/{slug}/{rel}", book.get("known_gaps", []), stz_targets, f"{lang} reader")
 
     print("\nthe house's own pages")
