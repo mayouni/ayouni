@@ -11,7 +11,7 @@ scratch/
 # Built by tools/build_site.py (GitHub Actions rebuilds it from the pinned books)
 site/
 
-# No PDF or ePub online unless the author says so (DECISIONS HOUSE-05)
+# No PDF or ePub online unless the author says so (DECISIONS HOUSE-05, HOUSE-11): a download the registry lists is added with `git add -f`
 *.pdf
 *.epub
 

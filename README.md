@@ -19,4 +19,8 @@ To build the site on your machine: `python tools/build_site.py`, then `python to
 A reader lives at `/books/<slug>/en/` or `/books/<slug>/fr/`; the same folder carries the book as data: `book.json`, `llms-book.txt`,
 `llms-full-book.txt`, and one Markdown file per page under `agents/`.
 
+Every book is free to read in every form; the reader pays after, if it was useful; paper and the author's time are what is sold. How the books
+are offered is on the site's offer page and in [OPEN-BOOK.md](OPEN-BOOK.md); the paper edition is in [PAPER.md](PAPER.md); the licence shape is
+[templates/LICENSE.md](templates/LICENSE.md).
+
 The decisions of the house, with the author's words, are in [DECISIONS.md](DECISIONS.md).

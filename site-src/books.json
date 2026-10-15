@@ -15,6 +15,9 @@
       "readers": { "en": "web/index.html" },
       "extra_files": ["web/cover.png"],
       "map": { "web/index.html": "en/index.html", "web/cover.png": "en/cover.png" },
+      "downloads": [
+        { "kind": "pdf", "lang": "en", "from": "web/book.pdf", "to": "book.pdf", "authority": "HOUSE-11" }
+      ],
       "title": { "en": "Refinement-Oriented Programming", "fr": "Refinement-Oriented Programming" },
       "subtitle": { "en": "A discipline for software in the agentic era", "fr": null },
       "series": { "en": "First of the AYOUNI books", "fr": "Premier des livres AYOUNI" },

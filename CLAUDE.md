@@ -13,7 +13,7 @@ Two kinds of session work in this folder:
 | # | Book | Folder | State |
 |---|---|---|---|
 | 0 | *Beginning Ring Programming* (Apress, 2020) | `books/ring-book/` | **archive**: the last files and a study of the writing (`style/`); the source of the writing framework. Its own repository; the manuscript files are Apress's property and never go public (HOUSE-06) |
-| 1 | *Refinement-Oriented Programming* | `books/refinement-book/` | shipped (web reader + PDF); tracked here as plain files, PDFs excluded; its reader is on the house address (HOUSE-10) |
+| 1 | *Refinement-Oriented Programming* | `books/refinement-book/` | shipped (web reader + PDF); tracked here as plain files; its reader and its PDF are on the house address (HOUSE-10, HOUSE-11) |
 | 2 | *Softanza — The Governed Software Platform of the AI Age* | `books/softanza-book/` | **active**; its own repository, a submodule of the house; all pages `status: draft` |
 
 Unless the author says otherwise, a book session works in its book's folder; the house session works here at the root.
@@ -35,7 +35,10 @@ It is its own repository, a submodule of the house like the Softanza book. The p
   switching Pages on. Prepare, then ask. The first three acts were done on 2026-10-14 (DECISIONS HOUSE-03): `mayouni/ayouni`,
   `mayouni/softanza-book` and `mayouni/writing-framework` are public and Pages is on, so from now **every push to them publishes at once**:
   ask first, and ask the book session to tell the desk before it pushes.
-- No PDF or ePub online unless the author says so. Keep every page's draft banner.
+- **The open book (HOUSE-11, `OPEN-BOOK.md`)**: every book is free to read in every form, nothing is gated; the reader pays after, if it was useful;
+  paper and the author's time are sold (`PAPER.md`); the text is CC BY-NC-ND 4.0 (`templates/LICENSE.md`). A PDF or ePub goes online only when the author
+  has said so and `site-src/books.json` lists it under `downloads`; the gate fails on any other. No session names a payment service, an amount or a
+  consulting address the author has not given. Keep every page's draft banner.
 
 ## Rules that bind this session
 

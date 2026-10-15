@@ -5,7 +5,8 @@
     python tools/check_public.py tree [repo ...]                    # the tracked files of each repository (default: the house)
     python tools/check_public.py history repo [repo ...] [--deny-file F]   # every blob of every commit, before a first push
 
-site:    no PDF or ePub; every reader is the book's file byte for byte; every draft page keeps its banner; the house's own copy
+site:    no PDF or ePub except those the registry lists under `downloads` (each allowed by a decision of the author, byte for byte the
+         book's own, and the reader's print icon opens it); every reader is the book's file byte for byte; every draft page keeps its banner; the house's own copy
          agrees with the book's reader; the index pages follow one type scale; no emoji or forbidden word in the house's own text;
          every internal link resolves (the readers' links to the Softanza website are checked as /stzsite/..., which is where
          they land at /books/<slug>/<lang>/). --online asks the live addresses (HEAD) and reports what does not answer.
@@ -22,7 +23,7 @@ from urllib.parse import urlparse
 
 ROOT = Path(__file__).resolve().parent.parent
 sys.path.insert(0, str(Path(__file__).resolve().parent))
-from build_site import EDITIONS  # the words the index uses for a manifest's `edition`
+from build_site import EDITIONS, PAGES  # the words the index uses for a manifest's `edition`; where each page of the house lives
 
 FORBIDDEN_SUFFIXES = {".pdf", ".epub", ".mobi", ".docx", ".doc", ".pptx", ".xlsx", ".zip", ".7z", ".exe", ".dll"}
 EMOJI = re.compile("[\U0001F300-\U0001FAFF\U00002600-\U000027BF\U0001F000-\U0001F2FF\U0000FE0F\U0000200D]")
@@ -44,6 +45,12 @@ SECRETS = {
 }
 LOCAL_PATH = re.compile(r"\b[A-Za-z]:[\\/](?:Users|MyDocs|GitHub)[\\/][^\s\"'<>`)]{0,40}|/home/[a-z][\w-]*/[^\s\"'<>`)]{0,30}")
 STZSITE_PREFIX = "/stzsite/"
+
+
+def registered_downloads():
+    """Repository paths of the PDFs and ePubs the registry lists, each allowed by a decision of the author."""
+    reg = json.loads((ROOT / "site-src" / "books.json").read_text(encoding="utf-8"))
+    return {f"{b['folder']}/{d['from']}" for b in reg["books"] if b["publish"] for d in b.get("downloads", [])}
 
 
 class Report:
@@ -165,8 +172,11 @@ def check_site(args):
     manifest_of = json.loads((site / "house.json").read_text(encoding="utf-8"))
     print(f"site {site}")
 
-    bad = [p.relative_to(site).as_posix() for p in site.rglob("*") if p.suffix.lower() in FORBIDDEN_SUFFIXES]
-    (rep.fail(f"files the house does not publish: {bad[:5]}") if bad else rep.ok("no PDF, ePub, Word or archive file"))
+    allowed = {f"books/{b['slug']}/{d['to']}" for b in reg["books"] if b["publish"] for d in b.get("downloads", [])}
+    bad = [p.relative_to(site).as_posix() for p in site.rglob("*")
+           if p.suffix.lower() in FORBIDDEN_SUFFIXES and p.relative_to(site).as_posix() not in allowed]
+    (rep.fail(f"files the house does not publish: {bad[:5]}") if bad
+     else rep.ok(f"no PDF, ePub, Word or archive file beyond the {len(allowed)} download(s) the registry lists"))
     for need in ("index.html", "fr/index.html", "llms.txt", "house.json", ".nojekyll"):
         if not (site / need).is_file():
             rep.fail(f"missing {need}")
@@ -202,6 +212,23 @@ def check_site(args):
             else:
                 (rep.ok(f"the index pages name the edition: {names}") if all(names[l] in index[l] for l in index)
                  else rep.fail(f"the manifest says {mf['edition']!r} and an index page does not"))
+        for d in book.get("downloads", []):
+            served, source = dest / d["to"], folder / d["from"]
+            where = f"books/{slug}/{d['to']}"
+            if not served.is_file():
+                rep.fail(f"{where}: registered download is not in the site")
+                continue
+            data = served.read_bytes()
+            if d["kind"] == "pdf" and data[:5] != b"%PDF-":
+                rep.fail(f"{where}: not a PDF")
+            elif source.is_file() and data != source.read_bytes():
+                rep.warn(f"{where}: differs from the checkout (rebuild)")
+            else:
+                rep.ok(f"{where}: the book's own {d['kind'].upper()}, {len(data) >> 10} KB, allowed by {d['authority']}")
+            names = [lang for lang, src in book["readers"].items()
+                     if f"../{d['to']}" in (dest / book.get("map", {}).get(src, src)).read_text(encoding="utf-8", errors="replace")]
+            (rep.ok(f"the reader's print button opens it ({d['lang']}: ../{d['to']})") if names
+             else rep.warn(f"no reader of {slug} opens {where}: the print icon should open the published PDF"))
         for fonts in sorted({p.parent for p in dest.rglob("*.woff2")}):
             (rep.ok(f"{fonts.relative_to(site).as_posix()}: every font family ships with its OFL licence") if list(fonts.glob("OFL*.txt"))
              else rep.fail(f"{fonts.relative_to(site).as_posix()}: font files without an OFL licence text beside them"))
@@ -228,7 +255,8 @@ def check_site(args):
             check_links(rep, site, reg, address_path, f"books/{slug}/{rel}", book.get("known_gaps", []), stz_targets, f"{lang} reader")
 
     print("\nthe house's own pages")
-    for rel in ("index.html", "fr/index.html"):
+    own_prefixes = (reg["house"]["address"], "https://github.com/mayouni/", "https://creativecommons.org/")
+    for rel in [p for langs in PAGES.values() for p in langs.values()]:
         text = (site / rel).read_text(encoding="utf-8")
         check_type_scale(rep, rel, text)
         prose = re.sub(r"<style>.*?</style>", "", text, flags=re.S)
@@ -236,17 +264,39 @@ def check_site(args):
         words = [label for pat, label in HOUSE_WORDS.items() if re.search(pat, re.sub(r"<[^>]+>", " ", prose), re.I)]
         (rep.fail(f"{rel}: emoji in a reader-visible page") if hits else rep.ok(f"{rel}: no emoji"))
         (rep.fail(f"{rel}: forbidden words: {words}") if words else rep.ok(f"{rel}: no forbidden word"))
-        ext = re.findall(r"""(?:src|href)=["'](https?://[^"']+)""", prose)
-        own = [u for u in ext if not u.startswith(reg["house"]["address"])]
-        (rep.fail(f"{rel}: calls other hosts: {own[:3]}") if own else rep.ok(f"{rel}: no third-party request"))
+        # a request is a resource the page loads; a link is a place the reader may go
+        loads = re.findall(r"""<(?:img|script|iframe|source|video|audio)[^>]*\ssrc=["'](https?://[^"']+)""", prose) + \
+            re.findall(r"""<link[^>]*\shref=["'](https?://[^"']+)""", prose)
+        loads = [u for u in loads if not u.startswith(reg["house"]["address"])]
+        (rep.fail(f"{rel}: loads from other hosts: {loads[:3]}") if loads else rep.ok(f"{rel}: no third-party request"))
+        links = [u for u in re.findall(r"""<a[^>]*\shref=["'](https?://[^"']+)""", prose) if not u.startswith(own_prefixes)]
+        (rep.fail(f"{rel}: links to hosts the house has not named: {links[:3]}") if links else rep.ok(f"{rel}: external links only to the house, github.com/mayouni and creativecommons.org"))
         check_links(rep, site, reg, address_path, rel, [], stz_targets, rel)
+    for key, label in (("offer", "the offer page"), ("licence", "the licence page")):
+        for lang in ("en", "fr"):
+            text = (site / PAGES[key][lang]).read_text(encoding="utf-8")
+            if key == "licence":
+                (rep.ok(f"{lang} {label} states CC BY-NC-ND 4.0") if "CC BY-NC-ND 4.0" in text else rep.fail(f"{lang} {label} does not state CC BY-NC-ND 4.0"))
+            else:
+                gate = re.findall(r"(?i)<(form|input|script|dialog|iframe)\b", text)
+                (rep.ok(f"{lang} {label}: no form, script, dialog or frame: nothing can gate or nag") if not gate
+                 else rep.fail(f"{lang} {label}: {sorted(set(gate))} on a page that must never gate or nag"))
+    for lang in ("en", "fr"):
+        text = (site / PAGES["index"][lang]).read_text(encoding="utf-8")
+        ask = text.count('class="ask"')
+        books = text.count('<article class="book">')
+        (rep.ok(f"{lang} index: one ask per book card ({books})") if ask == books
+         else rep.fail(f"{lang} index: {ask} asks for {books} book cards"))
     llms = (site / "llms.txt").read_text(encoding="utf-8")
     (rep.fail("llms.txt: emoji") if EMOJI.search(llms) else rep.ok("llms.txt: no emoji"))
 
     if args.online:
         import urllib.request
-        urls = sorted({"https://mayouni.github.io" + u for u in stz_targets} |
-                      {reg["house"]["address"], reg["house"]["address"] + "fr/", reg["house"]["address"] + "llms.txt", reg["house"]["address"] + "house.json"})
+        addr = reg["house"]["address"]
+        urls = sorted({"https://mayouni.github.io" + u for u in stz_targets}
+                      | {addr + p.rsplit("index.html", 1)[0] for langs in PAGES.values() for p in langs.values()}
+                      | {addr + "llms.txt", addr + "house.json"}
+                      | {f"{addr}books/{b['slug']}/{d['to']}" for b in reg["books"] if b["publish"] for d in b.get("downloads", [])})
         print(f"\nonline: {len(urls)} addresses")
         for u in urls:
             try:
@@ -272,8 +322,12 @@ def check_tree(args):
             continue
         files = [l.split("\t", 1) for l in out.splitlines()]
         blobs = [(meta.split()[0], p) for meta, p in files]
-        bad = [p for mode, p in blobs if mode != "160000" and Path(p).suffix.lower() in FORBIDDEN_SUFFIXES]
-        (rep.fail(f"tracked files of a type the house does not publish: {bad[:5]}") if bad else rep.ok("no PDF, ePub, Word or archive file tracked"))
+        allowed = registered_downloads() if repo == ROOT.resolve() else set()
+        bad = [p for mode, p in blobs if mode != "160000" and Path(p).suffix.lower() in FORBIDDEN_SUFFIXES and p not in allowed]
+        (rep.fail(f"tracked files of a type the house does not publish: {bad[:5]}") if bad
+         else rep.ok(f"no PDF, ePub, Word or archive file tracked beyond the {len(allowed)} the registry lists"))
+        missing = [p for p in allowed if p not in {q for _, q in blobs}]
+        (rep.fail(f"registered downloads that are not tracked (GitHub Actions would not find them): {missing}") if missing else None)
         ring = [p for mode, p in blobs if p.startswith("books/ring-book/") and p not in ("books/ring-book/README.md", "books/ring-book/CLAUDE.md")
                 and not p.startswith("books/ring-book/style/")]
         (rep.fail(f"Ring archive files tracked (Apress's property): {ring[:5]}") if ring else rep.ok("nothing of the Ring archive but its README, CLAUDE.md and style/"))
@@ -340,7 +394,8 @@ def check_history(args):
                 rep.fail(f"{paths[sha]}: {size >> 20} MB blob in history (GitHub refuses over 100 MB; over 25 MB is unwise)")
             elif size > 10 << 20:
                 rep.warn(f"{paths[sha]}: {size >> 20} MB blob in history")
-        forb = sorted({paths[s] for s in sizes if Path(paths[s]).suffix.lower() in FORBIDDEN_SUFFIXES})
+        allowed = registered_downloads() if repo == ROOT.resolve() else set()
+        forb = sorted({paths[s] for s in sizes if Path(paths[s]).suffix.lower() in FORBIDDEN_SUFFIXES and paths[s] not in allowed})
         (rep.warn(f"files of a type the house does not publish exist in history (they would be public): {forb[:6]}") if forb
          else rep.ok("no PDF, ePub, Word or archive file ever committed"))
 

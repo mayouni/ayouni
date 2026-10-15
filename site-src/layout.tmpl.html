@@ -30,9 +30,14 @@ a { color: var(--accent); text-underline-offset: 3px; }
 a:focus-visible { outline: 2px solid var(--accent); outline-offset: 3px; }
 .label { font: 600 var(--t-label)/1.4 system-ui, 'Segoe UI', sans-serif; letter-spacing: .06em; text-transform: uppercase; color: var(--quiet); margin: 0; }
 .lead { font-size: var(--t-subtitle); line-height: 1.45; margin: 0 0 20px; }
-.lang { margin: 0 0 8px; font: 500 var(--t-label)/1.4 system-ui, 'Segoe UI', sans-serif; }
-.lang [aria-current] { color: var(--ink); font-weight: 700; text-decoration: none; }
-.book, .agents { display: flex; gap: 24px; align-items: flex-start; border-top: 1px solid var(--rule); padding: 32px 0; }
+.site-nav, .lang { margin: 0 0 8px; font: 500 var(--t-label)/1.4 system-ui, 'Segoe UI', sans-serif; }
+.site-nav { display: flex; flex-wrap: wrap; gap: 4px 20px; }
+.site-nav [aria-current], .lang [aria-current] { color: var(--ink); font-weight: 700; text-decoration: none; }
+.book, .agents, .prose section { display: flex; gap: 24px; align-items: flex-start; border-top: 1px solid var(--rule); padding: 32px 0; }
+.prose section { display: block; }
+.prose h2 { margin-bottom: 12px; }
+.prose p { margin: 0 0 12px; }
+.prose ul { margin: 0 0 12px; padding-left: 1.2em; }
 .book img { flex: none; width: 140px; height: auto; border: 1px solid var(--rule); }
 .book .text, .agents .text { min-width: 0; }
 .subtitle { font-size: var(--t-subtitle); line-height: 1.35; margin: 0 0 12px; }
@@ -41,7 +46,13 @@ a:focus-visible { outline: 2px solid var(--accent); outline-offset: 3px; }
 .links { list-style: none; margin: 0 0 12px; padding: 0; }
 .links li { margin: 2px 0; }
 .links .note { color: var(--quiet); }
+.ask { margin: 0 0 8px; }
+.button { display: inline-block; font: 600 var(--t-body)/1.2 system-ui, 'Segoe UI', sans-serif; text-decoration: none; color: var(--accent);
+  border: 1px solid var(--accent); border-radius: 4px; padding: 8px 14px; }
+.button:hover { background: var(--accent); color: var(--paper); }
 footer { border-top: 1px solid var(--rule); padding-top: 24px; }
+footer p { margin: 0 0 8px; }
+.colophon { font: var(--t-label)/1.5 system-ui, 'Segoe UI', sans-serif; color: var(--quiet); }
 @media (max-width: 480px) {
   .book { flex-direction: column; gap: 16px; }
 }
@@ -50,24 +61,17 @@ footer { border-top: 1px solid var(--rule); padding-top: 24px; }
 <body>
 <header>
   <p class="label">$mark</p>
-  <h1>$line</h1>
+  <h1>$h1</h1>
   <p class="lead">$lead</p>
+  <nav class="site-nav" aria-label="$nav_label">$site_nav</nav>
   <nav class="lang" aria-label="$lang_label">$lang_switch</nav>
 </header>
 <main>
-$books_html
-<section class="agents">
-  <div class="text">
-    <h2>$agents_h</h2>
-    <p>$agents_p</p>
-    <ul class="links">
-$agents_links
-    </ul>
-  </div>
-</section>
+$main
 </main>
 <footer>
   <p class="label">$footer</p>
+  <p class="colophon">$colophon</p>
 </footer>
 </body>
 </html>

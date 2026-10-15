@@ -5,15 +5,16 @@
     python tools/build_site.py --out other     # elsewhere inside this repository
 
 What it does, from site-src/books.json:
-  * copies each published book's readers, manifest, agents' files and covers, byte for byte (no page is rewritten,
-    so every draft banner survives); refuses a PDF, an ePub or any file type the house does not publish;
-  * writes the index of the books in English (site/index.html) and French (site/fr/index.html) from site-src/index.tmpl.html,
-    reading titles, counts and stamps from each book's own manifest, never composing them;
+  * copies each published book's readers, manifest, agents' files, covers and registered downloads, byte for byte (no page is
+    rewritten, so every draft banner survives); a PDF or ePub is copied only when the registry lists it under `downloads` with the
+    decision that allows it; any other file type the house does not publish stops the build;
+  * writes the index of the books, the offer page and the licence page, in English and French, from site-src/layout.tmpl.html and
+    site-src/pages/, reading titles, counts, editions and stamps from each book's own manifest, never composing them;
   * writes llms.txt and house.json (the exact URLs, the commit each book was built from, the sha256 of what was copied);
   * writes .nojekyll.
 It changes nothing in a book. Then run:  python tools/check_public.py site
 """
-import argparse, hashlib, html, json, re, shutil, struct, subprocess, sys
+import argparse, hashlib, html, json, posixpath, re, shutil, struct, subprocess, sys
 from datetime import datetime
 from pathlib import Path
 from string import Template
@@ -21,11 +22,20 @@ from urllib.parse import urljoin
 
 ROOT = Path(__file__).resolve().parent.parent
 REGISTRY = ROOT / "site-src" / "books.json"
-TEMPLATE = ROOT / "site-src" / "index.tmpl.html"
+LAYOUT = ROOT / "site-src" / "layout.tmpl.html"
+PAGES_DIR = ROOT / "site-src" / "pages"
 PUBLISHABLE = {".html", ".json", ".txt", ".md", ".png", ".svg", ".css", ".js", ".woff2", ".jpg", ".webp"}
+DOWNLOAD_SUFFIXES = {".pdf", ".epub"}
 MONTHS = {
     "en": ["January", "February", "March", "April", "May", "June", "July", "August", "September", "October", "November", "December"],
     "fr": ["janvier", "février", "mars", "avril", "mai", "juin", "juillet", "août", "septembre", "octobre", "novembre", "décembre"],
+}
+
+# Where each page of the house lives, by language.
+PAGES = {
+    "index": {"en": "index.html", "fr": "fr/index.html"},
+    "offer": {"en": "offer/index.html", "fr": "fr/offre/index.html"},
+    "licence": {"en": "licence/index.html", "fr": "fr/licence/index.html"},
 }
 
 # The manifest's `edition` field, said in each language. The French is the book's own press edition's word for it.
@@ -40,6 +50,8 @@ STRINGS = {
         "description": "The books of Mansour Ayouni, published by AYOUNI Press as readers for people and as data for AI agents.",
         "lead": "The books of Mansour Ayouni: readers for people, data for AI agents.",
         "lang_label": "Language",
+        "nav_label": "The house",
+        "nav": {"index": "Books", "offer": "How these books are offered", "licence": "Licence"},
         "cover_alt": "Cover of {title}",
         "state_all": "{n} pages, all in {status}. Every page carries its draft banner.",
         "state_mixed": "{n} pages: {parts}.",
@@ -48,22 +60,37 @@ STRINGS = {
         "built": "Built {date}.",
         "read_en": "Read in English",
         "read_fr": "Lire en français",
+        "langs": {"en": "English", "fr": "French"},
         "notes": {
             "book.json": "the whole book as data",
             "llms-book.txt": "a summary for AI agents",
             "llms-full-book.txt": "every page as text",
+            "pdf": "the book as a PDF, to read or print",
+            "epub": "the book as an ePub",
         },
+        "ask": "If this book was useful to you, and you can, pay what it was worth.",
+        "ask_button": "How to pay what it was worth",
         "agents_h": "For AI agents",
         "agents_p": ("Each published book is also data, at the same address as its readers: a manifest, a summary, the full text, "
                      "and one file per page (agents/&lt;slug&gt;.md). llms.txt lists them; house.json gives the exact URLs and "
                      "the commit each book was built from."),
         "footer": "AYOUNI Press is the books imprint of AYOUNI.",
+        "colophon": ("Free to read and share under CC BY-NC-ND 4.0; code under the library's licence; "
+                     "pay what it was worth, if it was."),
+        "pages": {
+            "offer": {"title": "How these books are offered", "lead": "Every AYOUNI book is free to read, in every form. Nothing is gated.",
+                      "description": "How AYOUNI Press offers its books: free to read in every form, pay after if it was useful, the paper edition and the author's time sold."},
+            "licence": {"title": "Licence", "lead": "One licence shape for every AYOUNI book.",
+                        "description": "The licence of the AYOUNI books: the text under CC BY-NC-ND 4.0, the code under the library's licence, illustrations as each book says."},
+        },
     },
     "fr": {
         "page_title": "Éditions AYOUNI",
         "description": "Les livres de Mansour Ayouni, publiés par Éditions AYOUNI comme lecteurs pour les personnes et comme données pour les agents d'IA.",
         "lead": "Les livres de Mansour Ayouni : des lecteurs pour les personnes, des données pour les agents d'IA.",
         "lang_label": "Langue",
+        "nav_label": "La maison",
+        "nav": {"index": "Les livres", "offer": "Comment ces livres sont offerts", "licence": "Licence"},
         "cover_alt": "Couverture de {title}",
         "state_all": "{n} pages, toutes en {status}. Chaque page porte son bandeau de brouillon.",
         "state_mixed": "{n} pages : {parts}.",
@@ -72,16 +99,29 @@ STRINGS = {
         "built": "Construit le {date}.",
         "read_en": "Read in English",
         "read_fr": "Lire en français",
+        "langs": {"en": "anglais", "fr": "français"},
         "notes": {
             "book.json": "le livre entier en données",
             "llms-book.txt": "un résumé pour les agents d'IA",
             "llms-full-book.txt": "chaque page en texte",
+            "pdf": "le livre en PDF, à lire ou à imprimer",
+            "epub": "le livre en ePub",
         },
+        "ask": "Si ce livre vous a été utile, et si vous le pouvez, payez ce qu'il a valu pour vous.",
+        "ask_button": "Comment payer ce qu'il a valu",
         "agents_h": "Pour les agents d'IA",
         "agents_p": ("Chaque livre publié est aussi une donnée, à la même adresse que ses lecteurs : un manifeste, un résumé, le texte intégral "
                      "et un fichier par page (agents/&lt;slug&gt;.md). llms.txt les liste ; house.json donne les adresses exactes et "
                      "le commit d'où chaque livre a été construit."),
         "footer": "Éditions AYOUNI est la ligne de livres de la maison AYOUNI.",
+        "colophon": ("Libre à lire et à partager sous CC BY-NC-ND 4.0 ; le code sous la licence de la bibliothèque ; "
+                     "payez ce que le livre a valu, s'il a valu quelque chose."),
+        "pages": {
+            "offer": {"title": "Comment ces livres sont offerts", "lead": "Chaque livre AYOUNI est libre à lire, sous toutes ses formes. Rien n'est verrouillé.",
+                      "description": "Comment Éditions AYOUNI offre ses livres : libres à lire sous toutes leurs formes, à payer après si le livre a servi, l'édition papier et le temps de l'auteur vendus."},
+            "licence": {"title": "Licence", "lead": "Un seul modèle de licence pour chaque livre AYOUNI.",
+                        "description": "La licence des livres AYOUNI : le texte sous CC BY-NC-ND 4.0, le code sous la licence de la bibliothèque, les illustrations comme le dit chaque livre."},
+        },
     },
 }
 
@@ -123,9 +163,24 @@ def die(msg):
     sys.exit(1)
 
 
-def copy_file(src, dst, report):
-    if src.suffix.lower() not in PUBLISHABLE:
-        die(f"{src} is a type the house does not publish ({src.suffix}); no PDF, ePub or archive goes online")
+def e(s):
+    return html.escape(s, quote=True)
+
+
+def href_to(src, dst):
+    """The relative URL from the page at path `src` to the file at path `dst` (both inside the site)."""
+    sdir = posixpath.dirname(src) or "."
+    ddir = posixpath.dirname(dst) or "."
+    rel = posixpath.relpath(ddir, sdir)
+    rel = "" if rel == "." else rel + "/"
+    name = posixpath.basename(dst)
+    out = rel + ("" if name == "index.html" else name)
+    return out or "./"
+
+
+def copy_file(src, dst, report, allow_download=False):
+    if src.suffix.lower() not in PUBLISHABLE and not allow_download:
+        die(f"{src} is a type the house does not publish ({src.suffix}); no PDF or ePub goes online unless the registry lists it under `downloads`")
     dst.parent.mkdir(parents=True, exist_ok=True)
     shutil.copyfile(src, dst)
     report[dst] = sha256(dst)
@@ -165,6 +220,18 @@ def publish_book(book, out, report):
                 rel = src.relative_to(folder).as_posix()
                 copy_file(src, dest / rel, report)
                 published.append(rel)
+    for d in book.get("downloads", []):
+        src = folder / d["from"]
+        if not src.is_file():
+            die(f"{src} is missing")
+        if src.suffix.lower() not in DOWNLOAD_SUFFIXES or d.get("kind") != src.suffix.lower().lstrip("."):
+            die(f"{src}: a download is a .pdf or .epub whose registry `kind` says so")
+        if not d.get("authority"):
+            die(f"{src}: a download needs its `authority`, the decision of the author that allows it")
+        if src.suffix.lower() == ".pdf" and src.read_bytes()[:5] != b"%PDF-":
+            die(f"{src} is not a PDF")
+        copy_file(src, dest / d["to"], report, allow_download=True)
+        published.append(d["to"])
     return manifest, published
 
 
@@ -177,7 +244,8 @@ def book_state(book):
     if tree:
         m = re.match(r"160000 commit ([0-9a-f]{40})\t", tree)
         pinned = m.group(1) if m else None
-    dirty = git("status", "--porcelain", "--", *source_files(book), *book.get("dirs", []), cwd=folder)
+    paths = [*source_files(book), *book.get("dirs", []), *[d["from"] for d in book.get("downloads", [])]]
+    dirty = git("status", "--porcelain", "--", *paths, cwd=folder)
     return head, pinned, bool(dirty)
 
 
@@ -220,12 +288,9 @@ def state_line(book, manifest, lang):
     return line
 
 
-def e(s):
-    return html.escape(s, quote=True)
-
-
 def render_book(book, manifest, lang):
     S = STRINGS[lang]
+    page = PAGES["index"][lang]
     base = "" if lang == "en" else "../"
     slug = book["slug"]
     title = book["title"][lang] or book["title"]["en"]
@@ -252,12 +317,18 @@ def render_book(book, manifest, lang):
         order = [l for l in (["fr", "en"] if lang == "fr" else ["en", "fr"]) if l in book["readers"]]
         out.append('    <ul class="links">')
         for l in order:
-            lab = S["read_" + l]
-            out.append(f'      <li><a href="{base}books/{slug}/{l}/" hreflang="{l}" lang="{l}">{e(lab)}</a></li>')
+            out.append(f'      <li><a href="{base}books/{slug}/{l}/" hreflang="{l}" lang="{l}">{e(S["read_" + l])}</a></li>')
+        downloads = book.get("downloads", [])
+        for d in downloads:
+            label = d["kind"].upper() if len(downloads) == 1 else f'{d["kind"].upper()} ({S["langs"][d["lang"]]})'
+            out.append(f'      <li><a href="{base}books/{slug}/{e(d["to"])}" hreflang="{d["lang"]}">{e(label)}</a>'
+                       f'<span class="note">: {e(S["notes"][d["kind"]])}</span></li>')
         for f in book.get("files", []):
             if f in S["notes"]:
                 out.append(f'      <li><a href="{base}books/{slug}/{f}">{e(f)}</a><span class="note">: {e(S["notes"][f])}</span></li>')
         out.append('    </ul>')
+        out.append(f'    <p class="ask">{e(S["ask"])}</p>')
+        out.append(f'    <p><a class="button" href="{href_to(page, PAGES["offer"][lang])}">{e(S["ask_button"])}</a></p>')
         if manifest:
             out.append(f'    <p class="label">{e(S["built"].format(date=full_date(manifest["built"], lang)))}</p>')
     out.append('  </div>')
@@ -265,34 +336,47 @@ def render_book(book, manifest, lang):
     return "\n".join(out)
 
 
-def render_index(reg, manifests, lang, template):
+def render_agents(lang):
+    S = STRINGS[lang]
+    base = "" if lang == "en" else "../"
+    return "\n".join([
+        '<section class="agents">', '  <div class="text">', f'    <h2>{e(S["agents_h"])}</h2>', f'    <p>{S["agents_p"]}</p>',
+        '    <ul class="links">',
+        f'      <li><a href="{base}llms.txt">llms.txt</a></li>', f'      <li><a href="{base}house.json">house.json</a></li>',
+        '    </ul>', '  </div>', '</section>'])
+
+
+def render_page(reg, lang, key, main, layout):
+    """One page of the house in one language, inside the shared layout."""
     S = STRINGS[lang]
     house = reg["house"]
-    base = "" if lang == "en" else "../"
-    ordered = sorted(reg["books"], key=lambda b: (not b["publish"], reg["books"].index(b)))
-    books_html = "\n".join(render_book(b, manifests.get(b["slug"]), lang) for b in ordered)
-    if lang == "en":
-        switch = '<span aria-current="page">English</span> · <a href="fr/" hreflang="fr" lang="fr">Français</a>'
-    else:
-        switch = '<a href="../" hreflang="en" lang="en">English</a> · <span aria-current="page">Français</span>'
-    links = [f'      <li><a href="{base}llms.txt">llms.txt</a></li>', f'      <li><a href="{base}house.json">house.json</a></li>']
-    return Template(template).substitute(
+    page = PAGES[key][lang]
+    other = "fr" if lang == "en" else "en"
+    link = lambda k: href_to(page, PAGES[k][lang])
+    nav = " ".join((f'<span aria-current="page">{e(S["nav"][k])}</span>' if k == key else f'<a href="{link(k)}">{e(S["nav"][k])}</a>')
+                   for k in PAGES)
+    here = f'<span aria-current="page">{"English" if lang == "en" else "Français"}</span>'
+    there = f'<a href="{href_to(page, PAGES[key][other])}" hreflang="{other}" lang="{other}">{"Français" if lang == "en" else "English"}</a>'
+    switch = f"{here} · {there}" if lang == "en" else f"{there} · {here}"
+    meta = S if key == "index" else S["pages"][key]
+    absolute = lambda l: urljoin(house["address"], PAGES[key][l].rsplit("index.html", 1)[0])
+    return Template(layout).substitute(
         lang=lang,
-        page_title=e(S["page_title"]),
-        description=e(S["description"]),
-        href_en=house["address"],
-        href_fr=urljoin(house["address"], "fr/"),
+        page_title=e(S["page_title"] if key == "index" else f'{S["pages"][key]["title"]} · {S["page_title"]}'),
+        description=e(meta["description"]),
+        href_en=absolute("en"),
+        href_fr=absolute("fr"),
         href_llms=urljoin(house["address"], "llms.txt"),
         mark=e(house["mark"]),
-        line=e(house["line"][lang]),
-        lead=e(S["lead"]),
+        h1=e(house["line"][lang] if key == "index" else S["pages"][key]["title"]),
+        lead=e(S["lead"] if key == "index" else S["pages"][key]["lead"]),
+        nav_label=e(S["nav_label"]),
+        site_nav=nav,
         lang_label=e(S["lang_label"]),
         lang_switch=switch,
-        books_html=books_html,
-        agents_h=e(S["agents_h"]),
-        agents_p=S["agents_p"],
-        agents_links="\n".join(links),
+        main=main,
         footer=e(S["footer"]),
+        colophon=e(S["colophon"]),
     )
 
 
@@ -302,15 +386,17 @@ def render_llms(reg, manifests, states):
     lines = [f"# {house['line']['en']}", "",
              "> The books of Mansour Ayouni, published as readers for people and as data for AI agents. "
              f"In French: {house['line']['fr']}.", "",
-             f"{house['mark']} is the house mark; {house['line']['en']} is its books imprint.", ""]
+             f"{house['mark']} is the house mark; {house['line']['en']} is its books imprint. "
+             "Every book is free to read in every form, nothing is gated; the reader pays after, if it was useful and if they can.", ""]
     for b in reg["books"]:
         if not b["publish"]:
             continue
         m = manifests[b["slug"]]
         base = urljoin(addr, f"books/{b['slug']}/")
+        pdfs = [f"- [{d['kind'].upper()}, {d['lang']}]({base}{d['to']})" for d in b.get("downloads", [])]
         if m is None:
             lines += [f"## {b['title']['en']}: {b['subtitle']['en']}", "", b["state"]["en"], "",
-                      f"- [Reader, English]({base}en/)", ""]
+                      f"- [Reader, English]({base}en/)", *pdfs, ""]
             continue
         counts = count_statuses(m)
         n = sum(counts.values())
@@ -320,11 +406,15 @@ def render_llms(reg, manifests, states):
                   ". A draft page says so in its banner; the banner is part of the page.", "",
                   f"- [Reader, English]({base}en/)",
                   f"- [Lecteur, français]({base}fr/)",
+                  *pdfs,
                   f"- [book.json]({base}book.json): the whole book as data; book.schema.json describes it",
                   f"- [llms-book.txt]({base}llms-book.txt): a summary for AI agents",
                   f"- [llms-full-book.txt]({base}llms-full-book.txt): every page as text",
                   f"- Per page: {base}agents/<slug>.md (the slugs are in book.json)", ""]
-    lines += ["## House", "", f"- [house.json]({urljoin(addr, 'house.json')}): the exact URLs and the commit each book was built from", ""]
+    lines += ["## House", "",
+              f"- [How these books are offered]({urljoin(addr, PAGES['offer']['en'].rsplit('index.html', 1)[0])})",
+              f"- [Licence]({urljoin(addr, PAGES['licence']['en'].rsplit('index.html', 1)[0])}): the text under CC BY-NC-ND 4.0",
+              f"- [house.json]({urljoin(addr, 'house.json')}): the exact URLs and the commit each book was built from", ""]
     return "\n".join(lines)
 
 
@@ -336,7 +426,7 @@ def main():
     if ROOT.resolve() not in out.parents:
         die(f"--out must be inside {ROOT}")
     reg = json.loads(REGISTRY.read_text(encoding="utf-8"))
-    template = TEMPLATE.read_text(encoding="utf-8")
+    layout = LAYOUT.read_text(encoding="utf-8")
 
     if out.exists():
         for child in out.iterdir():
@@ -361,9 +451,22 @@ def main():
         if pinned and head and pinned != head:
             warnings.append(f"{book['slug']}: HEAD {head[:7]} is not the commit the house pins ({pinned[:7]})")
 
-    (out / "index.html").write_text(render_index(reg, manifests, "en", template), encoding="utf-8")
-    (out / "fr").mkdir(exist_ok=True)
-    (out / "fr" / "index.html").write_text(render_index(reg, manifests, "fr", template), encoding="utf-8")
+    ordered = sorted(reg["books"], key=lambda b: (not b["publish"], reg["books"].index(b)))
+    for lang in ("en", "fr"):
+        books_html = "\n".join(render_book(b, manifests.get(b["slug"]), lang) for b in ordered)
+        index_main = books_html + "\n" + render_agents(lang)
+        target = out / PAGES["index"][lang]
+        target.parent.mkdir(parents=True, exist_ok=True)
+        target.write_text(render_page(reg, lang, "index", index_main, layout), encoding="utf-8")
+        for key in ("offer", "licence"):
+            page = PAGES[key][lang]
+            fragment = (PAGES_DIR / f"{key}.{lang}.html").read_text(encoding="utf-8")
+            main_html = Template(fragment).safe_substitute(
+                home=href_to(page, PAGES["index"][lang]), offer=href_to(page, PAGES["offer"][lang]),
+                licence=href_to(page, PAGES["licence"][lang]))
+            target = out / page
+            target.parent.mkdir(parents=True, exist_ok=True)
+            target.write_text(render_page(reg, lang, key, main_html, layout), encoding="utf-8")
     (out / "llms.txt").write_text(render_llms(reg, manifests, states), encoding="utf-8")
     (out / ".nojekyll").write_text("", encoding="utf-8")
 
@@ -391,9 +494,15 @@ def main():
                 entry["files"] = {f: base + f for f in book["files"]}
             if book.get("covers"):
                 entry["covers"] = {l: base + published_path(book, p) for l, p in book["covers"].items()}
+            if book.get("downloads"):
+                entry["downloads"] = [{"kind": d["kind"], "lang": d["lang"], "url": base + d["to"], "authority": d["authority"],
+                                       "bytes": (out / "books" / book["slug"] / d["to"]).stat().st_size,
+                                       "sha256": report[out / "books" / book["slug"] / d["to"]]} for d in book["downloads"]]
         books_out.append(entry)
-    house_json = {"schema": "ayouni-house-site/1", "built": stamp_now(), "address": addr,
-                  "house_commit": git("rev-parse", "HEAD", cwd=ROOT), "books": books_out}
+    house_json = {"schema": "ayouni-house-site/2", "built": stamp_now(), "address": addr,
+                  "house_commit": git("rev-parse", "HEAD", cwd=ROOT),
+                  "pages": {k: {l: urljoin(addr, p.rsplit("index.html", 1)[0]) for l, p in v.items()} for k, v in PAGES.items()},
+                  "books": books_out}
     (out / "house.json").write_text(json.dumps(house_json, ensure_ascii=False, indent=2) + "\n", encoding="utf-8")
 
     n_files = sum(1 for p in out.rglob("*") if p.is_file())
