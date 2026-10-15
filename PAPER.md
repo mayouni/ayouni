@@ -20,9 +20,9 @@ with organisations:
 |---|---|---|
 | Service planned | IngramSpark, print on demand (its publishing plan, written before HOUSE-12) | none named |
 | Trim | 6 x 9 in, perfect-bound paperback (its publishing plan); the PDF is built at exactly 6 x 9 in | 6.5 x 8.5 in, the cover's own proportion, full bleed (the book's PRINT-01) |
-| Pages | 107 (PDF rebuilt 2026-10-15, one page more than the 106 of 2026-07-18: the last page before the back cover) | 610 English, 630 French (proof copy PDFs, per the book session) |
+| Pages | 107 (PDF rebuilt 2026-10-15, one page more than the 106 of 2026-07-18: the last page before the back cover) | 617 English, 637 French (proof copy PDFs, per the book session) |
 | ISBN | pending | none recorded |
-| Cover art | `web/cover.png`, 1097 x 1434 px | `assets/cover/cover.png`, 1097 x 1434 px |
+| Cover art | `web/cover.png`, 2194 x 2868 px, white background | `assets/cover/cover.png`, 2194 x 2868 px, white background |
 
 ## The desk's proposal (for the author to choose)
 
@@ -38,8 +38,9 @@ with organisations:
 - **Interior PDF** at the trim size, fonts embedded, no crop marks: the book's existing press PDF is the starting point.
 - **Cover PDF**: front, spine and back in one file, with bleed. The spine width depends on the page count and the paper; the printer's
   calculator gives it. The back cover carries the ISBN and its barcode.
-- **Cover artwork at print resolution.** The usual requirement is 300 dpi at trim plus bleed. Both current covers are 1097 x 1434 px, which is
-  about 160 to 185 dpi at their trims: **a higher-resolution source is needed before paper.** This is a finding, not a decision.
+- **Cover artwork at print resolution.** The usual requirement is 300 dpi at trim plus bleed. Both covers are now 2194 x 2868 px: about 340 dpi at
+  the 6.5 x 8.5 in trim and 365 dpi at 6 x 9 in, so the front is sharp enough; the bleed (usually 0.125 in on each side) has to be added to the cover
+  file, and the spine and back come with the cover PDF. To confirm with the chosen printer.
 - **One ISBN per edition**, assigned by the author through the national agency.
 - **A proof copy** ordered and read by the author before any customer receives the book.
 
