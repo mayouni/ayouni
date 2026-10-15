@@ -212,7 +212,7 @@ def render_book(book, manifest, lang):
     out = ['<article class="book">']
     if book["publish"]:
         w, h = book["cover_size"]["width"], book["cover_size"]["height"]
-        out.append(f'  <img src="{base}books/{slug}/{e(book["covers"][lang])}" width="{w}" height="{h}" loading="lazy" '
+        out.append(f'  <img src="{base}books/{slug}/{e(book["covers"][lang])}" width="{w}" height="{h}" decoding="async" '
                    f'alt="{e(S["cover_alt"].format(title=title))}">')
     out.append('  <div class="text">')
     out.append(f'    <p class="label">{e(book["series"][lang])}</p>')
