@@ -43,6 +43,7 @@ PAGES = {
 EDITIONS = {
     "proof copy": {"en": "Proof copy", "fr": "Épreuve de travail"},
     "read by the author": {"en": "Read by the author", "fr": "Lu par l'auteur"},
+    "published": {"en": "Published", "fr": "Publié"},  # the book session's enum since STATUS-01: a proof copy until every page is published
 }
 
 STRINGS = {
