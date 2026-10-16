@@ -4,3 +4,6 @@
 [submodule "writing-framework"]
 	path = writing-framework
 	url = https://github.com/mayouni/writing-framework.git
+[submodule "books/refinement-book"]
+	path = books/refinement-book
+	url = https://github.com/mayouni/refinement-book.git

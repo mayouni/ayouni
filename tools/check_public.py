@@ -53,6 +53,15 @@ def registered_downloads():
     return {f"{b['folder']}/{d['from']}" for b in reg["books"] if b["publish"] for d in b.get("downloads", []) if d.get("from")}
 
 
+def allowed_downloads(repo):
+    """The PDFs and ePubs a repository may track: the house's own registered downloads; and, in a book's repository (found by its folder's name,
+    books/refinement-book -> refinement-book), the files the registry lists for that book, by their path inside it."""
+    if repo == ROOT.resolve():
+        return registered_downloads()
+    reg = json.loads((ROOT / "site-src" / "books.json").read_text(encoding="utf-8"))
+    return {d["from"] for b in reg["books"] if b["publish"] and Path(b["folder"]).name == repo.name for d in b.get("downloads", []) if d.get("from")}
+
+
 class Report:
     def __init__(self, strict):
         self.strict, self.fails, self.warns = strict, 0, 0
@@ -401,12 +410,18 @@ def check_tree(args):
             continue
         files = [l.split("\t", 1) for l in out.splitlines()]
         blobs = [(meta.split()[0], p) for meta, p in files]
-        allowed = registered_downloads() if repo == ROOT.resolve() else set()
+        allowed = allowed_downloads(repo)
         bad = [p for mode, p in blobs if mode != "160000" and Path(p).suffix.lower() in FORBIDDEN_SUFFIXES and p not in allowed]
         (rep.fail(f"tracked files of a type the house does not publish: {bad[:5]}") if bad
          else rep.ok(f"no PDF, ePub, Word or archive file tracked beyond the {len(allowed)} the registry lists"))
-        missing = [p for p in allowed if p not in {q for _, q in blobs}]
+        submods = {p: meta.split()[1] for meta, p in files if meta.split()[0] == "160000"}
+        inside = {p: next(m for m in submods if p.startswith(m + "/")) for p in allowed if any(p.startswith(m + "/") for m in submods)}
+        missing = [p for p in allowed if p not in inside and p not in {q for _, q in blobs}]
         (rep.fail(f"registered downloads that are not tracked (GitHub Actions would not find them): {missing}") if missing else None)
+        # a registered download that lives in a submodule is checked in the commit the house pins
+        lacking = [p for p, m in inside.items() if git("cat-file", "-e", f"{submods[m]}:{p[len(m) + 1:]}", cwd=repo / m) is None]
+        (rep.fail(f"registered downloads that the pinned submodule commit does not hold: {lacking}") if lacking
+         else (rep.ok(f"{len(inside)} registered download(s) held by the pinned submodule commit") if inside else None))
         ring = [p for mode, p in blobs if p.startswith("books/ring-book/") and p not in ("books/ring-book/README.md", "books/ring-book/CLAUDE.md")
                 and not p.startswith("books/ring-book/style/")]
         (rep.fail(f"Ring archive files tracked (Apress's property): {ring[:5]}") if ring else rep.ok("nothing of the Ring archive but its README, CLAUDE.md and style/"))
@@ -473,7 +488,7 @@ def check_history(args):
                 rep.fail(f"{paths[sha]}: {size >> 20} MB blob in history (GitHub refuses over 100 MB; over 25 MB is unwise)")
             elif size > 10 << 20:
                 rep.warn(f"{paths[sha]}: {size >> 20} MB blob in history")
-        allowed = registered_downloads() if repo == ROOT.resolve() else set()
+        allowed = allowed_downloads(repo)
         forb = sorted({paths[s] for s in sizes if Path(paths[s]).suffix.lower() in FORBIDDEN_SUFFIXES and paths[s] not in allowed})
         (rep.warn(f"files of a type the house does not publish exist in history (they would be public): {forb[:6]}") if forb
          else rep.ok("no PDF, ePub, Word or archive file ever committed"))
