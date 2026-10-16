@@ -45,13 +45,17 @@ It is its own repository, a submodule of the house like the Softanza book. The p
 Every book session, present and future, reports to the author in the memo format of `writing-framework/templates/memo.md`: by, subject, why,
 did, state, waiting, next, note, the date and time read from the clock, in every substantive message and not only at the end of a phase.
 
+## Page stages in the books (HOUSE-18)
+
+Every page of every book has one of three stages, and its banner says which: **Draft** (French Brouillon): written, its code run and judged, read by fresh readers; **In review** (En relecture): the author is reviewing it; **Published** (Publié): the author approved it. Front-matter values `draft`, `review`, `published`. Only the author moves a page to `review` or `published`; an agent never does. The edition is a proof copy until every page is published. The gate fails on a page beyond Draft that the registry's `moved_by_author` does not record.
+
 ## Code in the books (HOUSE-CODE-01)
 
 Every book, doc and site shows code in the author's order of forms (the framework's AWF-12): the scene form with braces is the basis (three or more calls on one object); the chain for one sentence; the classic form shown; Naturally(...) shown where it runs; `@@()` stays until Haro prints the expressive form by default, and then the expressive printout is the norm in books, docs and their sites.
 
 ## Rules that bind this session
 
-Commit by explicit paths, never `git add -A` (a hook refuses it). Never set a book page to `status: read`. Never edit a book's text. Never
+Commit by explicit paths, never `git add -A` (a hook refuses it). Never move a book page to `review` or `published` (the author does; HOUSE-18). Never edit a book's text. Never
 background a heavy command. A decision is a dated row in `DECISIONS.md` with the author's words quoted.
 The author's standing rules: never undersell the work (stage and direction, never "weak" or "falls short"); the language is Haro, and Ring is named
 only in the Softanza book's Appendix H; "crafter" is the person, never "maker" (outside "decision-maker"), and the platform is defined by what it does;

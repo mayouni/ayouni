@@ -11,6 +11,7 @@
   "books": [
     {
       "slug": "softanza",
+      "moved_by_author": {},
       "folder": "books/softanza-book",
       "publish": true,
       "manifest": "book.json",

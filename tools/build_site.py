@@ -55,10 +55,11 @@ STRINGS = {
         "nav_label": "The house",
         "nav": {"index": "Books", "offer": "Working with the author", "licence": "Licence"},
         "cover_alt": "Cover of {title}",
-        "state_all": "{n} pages, all in {status}. Every page carries its draft banner.",
+        "state_all": "{n} pages, {status}. Every page carries its stage banner.",
         "state_mixed": "{n} pages: {parts}.",
         "state_none": "Its reader is not on this address yet.",
-        "status_word": {"draft": "draft", "read": "read"},
+        "status_all": {"draft": "all drafts", "review": "all in review", "published": "all published", "read": "all read"},
+        "status_word": {"draft": "draft", "review": "in review", "published": "published", "read": "read"},
         "built": "Built {date}.",
         "read_en": "Read in English",
         "read_fr": "Lire en français",
@@ -96,10 +97,11 @@ STRINGS = {
         "nav_label": "La maison",
         "nav": {"index": "Les livres", "offer": "Travailler avec l'auteur", "licence": "Licence"},
         "cover_alt": "Couverture de {title}",
-        "state_all": "{n} pages, toutes en {status}. Chaque page porte son bandeau de brouillon.",
+        "state_all": "{n} pages, {status}. Chaque page porte son bandeau d'étape.",
         "state_mixed": "{n} pages : {parts}.",
         "state_none": "Son lecteur n'est pas encore à cette adresse.",
-        "status_word": {"draft": "brouillon", "read": "lue"},
+        "status_all": {"draft": "toutes en brouillon", "review": "toutes en relecture", "published": "toutes publiées", "read": "toutes lues"},
+        "status_word": {"draft": "en brouillon", "review": "en relecture", "published": "publiées", "read": "lues"},
         "built": "Construit le {date}.",
         "read_en": "Read in English",
         "read_fr": "Lire en français",
@@ -308,7 +310,7 @@ def state_line(book, manifest, lang):
     words = S["status_word"]
     if len(counts) == 1:
         (only,) = counts
-        line = S["state_all"].format(n=n, status=words.get(only, only))
+        line = S["state_all"].format(n=n, status=S["status_all"].get(only, only))
     else:
         parts = ", ".join(f"{c} {words.get(s, s)}" for s, c in sorted(counts.items()))
         line = S["state_mixed"].format(n=n, parts=parts)
@@ -494,7 +496,7 @@ def render_llms(reg, manifests, states):
         lines += [f"## {m['title']}: {m['subtitle']}", "",
                   (f"Edition: {m['edition']}. " if m.get("edition") else "") +
                   f"{n} pages; by status: " + ", ".join(f"{c} {s}" for s, c in sorted(counts.items())) +
-                  ". A draft page says so in its banner; the banner is part of the page.", "",
+                  ". A page says its stage (Draft, In review or Published) in its banner; the banner is part of the page.", "",
                   f"- [Reader, English]({base}en/)",
                   f"- [Lecteur, français]({base}fr/)",
                   *pdfs,

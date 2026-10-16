@@ -6,7 +6,7 @@
     python tools/check_public.py history repo [repo ...] [--deny-file F]   # every blob of every commit, before a first push
 
 site:    no PDF or ePub except those the registry lists under `downloads` (each allowed by a decision of the author, byte for byte the
-         book's own, and the reader's print icon opens it); every reader is the book's file byte for byte; every draft page keeps its banner; the house's own copy
+         book's own, and the reader's print icon opens it); every reader is the book's file byte for byte; every page keeps its stage banner (Draft, In review or Published); the house's own copy
          agrees with the book's reader; the index pages follow one type scale; no emoji or forbidden word in the house's own text;
          every internal link resolves (the readers' links to the Softanza website are checked as /stzsite/..., which is where
          they land at /books/<slug>/<lang>/). --online asks the live addresses (HEAD) and reports what does not answer.
@@ -161,6 +161,12 @@ def check_links(rep, site, reg, address_path, page_rel, known, stz_targets, labe
         rep.warn(f"{label}: {outside} link(s) land outside the site and the Softanza website")
 
 
+# HOUSE-18: a page has one of three stages, its banner says which, and only the author moves a page beyond Draft.
+STAGES = ("draft", "review", "published")
+STAGE_WORDS = {"en": {"draft": "Draft", "review": "In review", "published": "Published"},
+               "fr": {"draft": "Brouillon", "review": "En relecture", "published": "Publié"}}
+
+
 def check_site(args):
     rep = Report(args.strict)
     site = (ROOT / args.site).resolve()
@@ -203,7 +209,25 @@ def check_site(args):
          else rep.ok(f"{len(entry['sha256'])} published files are the book's own, byte for byte"))
 
         mf = json.loads((dest / book["manifest"]).read_text(encoding="utf-8")) if book.get("manifest") else None
-        drafts = sum(1 for c in mf["chapters"] if c["status"] == "draft") if mf else None
+        stages = Counter(c["status"] for c in mf["chapters"]) if mf else Counter()
+        if mf:
+            summary = ", ".join(f"{n} {s}" for s, n in stages.items())
+            retired = sorted(s for s in stages if s not in STAGES + ("missing",))
+            if retired:
+                rep.warn(f"{slug}: the manifest uses retired stage values {retired}; the stages are draft, review and published (HOUSE-18)")
+            moved = book.get("moved_by_author", {})
+            unrecorded = [f"{c['id']} ({c['status']})" for c in mf["chapters"]
+                          if c["status"] not in ("draft", "missing") and moved.get(c["id"], {}).get("stage") != c["status"]]
+            if unrecorded:
+                rep.fail(f"{slug}: {len(unrecorded)} page(s) beyond Draft that the house has no record of the author moving (moved_by_author): {unrecorded[:4]}")
+            else:
+                beyond = sum(n for s, n in stages.items() if s not in ("draft", "missing"))
+                rep.ok(f"{slug}: page stages ({summary})" + (f"; the {beyond} beyond Draft are recorded as moved by the author" if beyond else ""))
+            every = bool(mf["chapters"]) and all(c["status"] == "published" for c in mf["chapters"])
+            if mf.get("edition") == "published" and not every:
+                rep.fail(f"{slug}: the edition says published and not every page is ({summary})")
+            elif mf.get("edition") == "proof copy" and every:
+                rep.warn(f"{slug}: every page is published and the edition still says proof copy")
         if mf and mf.get("edition"):
             names = EDITIONS.get(mf["edition"])
             index = {"en": (site / "index.html").read_text(encoding="utf-8"), "fr": (site / "fr" / "index.html").read_text(encoding="utf-8")}
@@ -243,9 +267,15 @@ def check_site(args):
             if re.search(r"(?i)pay what it was worth|payez ce que le livre|payez ce qu'il", text):
                 rep.warn(f"{lang} reader of {slug} still carries the retired ask (HOUSE-12); the book session replaces it with the invitation")
             if mf:
-                banners = text.count('class="status-banner st-draft"')
-                (rep.ok(f"{lang} reader: {banners} draft banners for {drafts} draft pages") if banners == drafts
-                 else rep.fail(f"{lang} reader: {banners} draft banners for {drafts} draft pages in the manifest"))
+                seen = {s: text.count(f'class="status-banner st-{s}"') for s in STAGES}
+                off = {s: (seen[s], stages[s]) for s in STAGES if seen[s] != stages[s]}
+                (rep.ok(f"{lang} reader: stage banners agree with the manifest ({', '.join(f'{seen[s]} {s}' for s in STAGES if seen[s])})") if not off
+                 else rep.fail(f"{lang} reader: banners and manifest disagree, as (banners, pages) per stage: {off}"))
+                labels = [(m.group(1), html.unescape(m.group(2)).strip())
+                          for m in re.finditer(r'class="status-banner st-(draft|review|published)"[^>]*>([^<]*)<', text)]
+                wrong = sorted({(s, w) for s, w in labels if not w.startswith(STAGE_WORDS[lang][s])})
+                (rep.fail(f"{lang} reader: a banner does not say its stage in the house's words: {wrong[:3]}") if wrong
+                 else rep.ok(f"{lang} reader: every banner says its stage in the house's words ({', '.join(STAGE_WORDS[lang].values())})"))
                 keys = ("subtitle", "tagline", "series")
             else:
                 keys = ("subtitle",)  # a book without a manifest: the house's own copy is checked against what the reader says of itself
