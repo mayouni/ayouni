@@ -13,13 +13,13 @@
   },
   "softanza.en.back.jpg": {
     "source": "books/softanza-book/assets/cover/back.png",
-    "sha256": "d4c16544ecd873c9b7388cd775f341b9d98dcb0cde5c238bf94097c5fe2b4e75",
+    "sha256": "647c09eb688ee353356a7e668cfbfc476bd0b7f30f7baa8ec5427a0dc5091f53",
     "width": 880,
     "height": 1150
   },
   "softanza.fr.back.jpg": {
     "source": "books/softanza-book/assets/cover/back.fr.png",
-    "sha256": "794f8cd6efbb97caf9411f8897a40f75b3a7eea85423df1da9675672d52d4513",
+    "sha256": "88c782fd7482451a52bb50c720d92e4e1ee5a72c7ff1fb8e44517bb66b8cf3d9",
     "width": 880,
     "height": 1150
   },
