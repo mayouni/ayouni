@@ -55,6 +55,11 @@ STRINGS = {
         "nav_label": "The house",
         "nav": {"index": "Books", "offer": "Working with the author", "licence": "Licence"},
         "cover_alt": "Cover of {title}",
+        "cover_alt_back": "Back cover of {title}",
+        "faces_label": "Cover",
+        "face_front": "Front",
+        "face_back": "Back",
+        "face_full": "Full size",
         "state_all": "{n} pages, {status}. Every page carries its stage banner.",
         "state_mixed": "{n} pages: {parts}.",
         "state_none": "Its reader is not on this address yet.",
@@ -97,6 +102,11 @@ STRINGS = {
         "nav_label": "La maison",
         "nav": {"index": "Les livres", "offer": "Travailler avec l'auteur", "licence": "Licence"},
         "cover_alt": "Couverture de {title}",
+        "cover_alt_back": "Quatrième de couverture de {title}",
+        "faces_label": "Couverture",
+        "face_front": "Première",
+        "face_back": "Quatrième",
+        "face_full": "Pleine taille",
         "state_all": "{n} pages, {status}. Chaque page porte son bandeau d'étape.",
         "state_mixed": "{n} pages : {parts}.",
         "state_none": "Son lecteur n'est pas encore à cette adresse.",
@@ -197,7 +207,7 @@ def copy_file(src, dst, report, allow_download=False):
 def source_files(book):
     """The files of a book's folder that the house publishes one by one (its directories are added apart)."""
     rels = [*([book["entry"]] if book.get("entry") else []), *book["readers"].values(), *book.get("files", []),
-            *book.get("extra_files", []), *book.get("covers", {}).values()]
+            *book.get("extra_files", []), *book.get("covers", {}).values(), *book.get("backs", {}).values()]
     return list(dict.fromkeys(rels))
 
 
@@ -338,17 +348,29 @@ THUMBS_JSON = ROOT / "site-src" / "assets" / "thumbs.json"
 THUMBS_USED, THUMBS_STALE = set(), set()
 
 
-def thumb_for(book, lang, cover_rel):
-    """The home page's small cover for a book, while it was made from exactly the cover being published (tools/make_thumbs.py)."""
+def thumb_for(book, lang, cover_rel, face="front"):
+    """The home page's small cover (or back cover) for a book, while it was made from exactly the file being published (tools/make_thumbs.py)."""
     if not THUMBS_JSON.is_file():
         return None
-    name = f"{book['slug']}.{lang}.jpg"
+    name = f"{book['slug']}.{lang}.jpg" if face == "front" else f"{book['slug']}.{lang}.back.jpg"
     info = json.loads(THUMBS_JSON.read_text(encoding="utf-8")).get(name)
     if info and (THUMBS_DIR / name).is_file() and info["sha256"] == sha256(ROOT / book["folder"] / cover_rel):
         THUMBS_USED.add(name)
         return {"name": name, "width": info["width"], "height": info["height"]}
     THUMBS_STALE.add(name)
     return None
+
+
+def cover_img(book, base, lang, rel, face, css, alt):
+    """An <img> of a cover face: its light thumbnail while that was made from the file being published, else the full file."""
+    thumb = thumb_for(book, lang, rel, face)
+    if thumb:
+        src, (w, h) = f'{base}assets/thumbs/{thumb["name"]}', (thumb["width"], thumb["height"])
+    else:
+        pw, ph = png_width_height(ROOT / book["folder"] / rel)
+        src, (w, h) = f'{base}books/{book["slug"]}/{e(published_path(book, rel))}', (340, round(340 * ph / pw))
+    hidden = ' aria-hidden="true"' if face == "back" else ""
+    return f'<img class="{css}" src="{src}" width="{w}" height="{h}" decoding="async" alt="{e(alt)}"{hidden}>'
 
 
 def render_book(book, manifest, lang):
@@ -368,15 +390,24 @@ def render_book(book, manifest, lang):
     if book["publish"] and covers:
         cover = covers.get(lang) or covers["en"]
         cover_lang = lang if lang in covers else "en"
-        thumb = thumb_for(book, cover_lang, cover)
-        if thumb:
-            src, (w, h) = f'{base}assets/thumbs/{thumb["name"]}', (thumb["width"], thumb["height"])
+        href = f'{base}books/{slug}/{order[0]}/'
+        front_img = cover_img(book, base, cover_lang, cover, "front", "front", S["cover_alt"].format(title=title))
+        backs = book.get("backs", {})
+        back = backs.get(cover_lang) or backs.get("en")
+        if not back:
+            out.append(f'  <a class="cover" href="{href}" hreflang="{order[0]}">{front_img}</a>')
         else:
-            pw, ph = png_width_height(ROOT / book["folder"] / cover)
-            src, (w, h) = f'{base}books/{slug}/{e(published_path(book, cover))}', (340, round(340 * ph / pw))
-        out.append(f'  <a class="cover" href="{base}books/{slug}/{order[0]}/" hreflang="{order[0]}">'
-                   f'<img src="{src}" width="{w}" height="{h}" decoding="async" '
-                   f'alt="{e(S["cover_alt"].format(title=title))}"></a>')
+            back_lang = cover_lang if cover_lang in backs else "en"
+            back_img = cover_img(book, base, back_lang, back, "back", "back", S["cover_alt_back"].format(title=title))
+            front_url, back_url = (f'{base}books/{slug}/{e(published_path(book, p))}' for p in (cover, back))
+            out += [
+                '  <div class="cover-block">',
+                f'    <a class="cover" href="{href}" hreflang="{order[0]}"><span class="flip"><span class="inner">{front_img}{back_img}</span></span></a>',
+                f'    <p class="faces" hidden><span class="sides" role="group" aria-label="{e(S["faces_label"])}">'
+                f'<button type="button" data-face="front" aria-pressed="true">{e(S["face_front"])}</button>'
+                f'<button type="button" data-face="back" aria-pressed="false">{e(S["face_back"])}</button></span> '
+                f'<a class="full" href="{front_url}" data-front="{front_url}" data-back="{back_url}" target="_blank" rel="noopener">{e(S["face_full"])}</a></p>',
+                '  </div>']
     out.append('  <div class="text">')
     out.append(f'    <p class="label">{e(book["series"][lang])}</p>')
     out.append(f'    <h2>{e(title)}</h2>')
@@ -425,6 +456,27 @@ def render_agents(reg, lang):
         '<section class="agents">', '  <div class="text">', f'    <h2>{e(S["agents_h"])}</h2>', f'    <p>{S["agents_p"]}</p>',
         '    <ul class="links">', *items, '    </ul>', '  </div>', '</section>'])
 
+
+# A cover turns over by a visible two-option control (the page works without it: the front shows, the cover links to the reader).
+FACES_SCRIPT = """<script>
+(function () {
+  document.querySelectorAll('.cover-block').forEach(function (block) {
+    var bar = block.querySelector('.faces');
+    if (!bar) return;
+    var buttons = bar.querySelectorAll('button'), full = bar.querySelector('.full');
+    var front = block.querySelector('img.front'), back = block.querySelector('img.back');
+    function show(face) {
+      block.classList.toggle('is-back', face === 'back');
+      buttons.forEach(function (b) { b.setAttribute('aria-pressed', b.getAttribute('data-face') === face ? 'true' : 'false'); });
+      front.setAttribute('aria-hidden', face === 'back' ? 'true' : 'false');
+      back.setAttribute('aria-hidden', face === 'back' ? 'false' : 'true');
+      full.setAttribute('href', full.getAttribute('data-' + face));
+    }
+    buttons.forEach(function (b) { b.addEventListener('click', function () { show(b.getAttribute('data-face')); }); });
+    bar.hidden = false;
+  });
+})();
+</script>"""
 
 LOGO = ROOT / "site-src" / "assets" / "ayouni-logo.svg"
 LOGO_PATH = "assets/ayouni-logo.svg"
@@ -548,7 +600,7 @@ def main():
     for lang in ("en", "fr"):
         books_html = "\n".join(render_book(b, manifests.get(b["slug"]), lang) for b in ordered)
         index_main = ('<div class="books">\n' + books_html + '\n</div>\n' + render_work(reg["house"]["contact"], lang) + "\n"
-                      + render_agents(reg, lang))
+                      + render_agents(reg, lang) + ("\n" + FACES_SCRIPT if any(b["publish"] and b.get("backs") for b in reg["books"]) else ""))
         target = out / PAGES["index"][lang]
         target.parent.mkdir(parents=True, exist_ok=True)
         target.write_text(render_page(reg, lang, "index", index_main, layout), encoding="utf-8")
@@ -595,6 +647,8 @@ def main():
                 entry["files"] = {f: base + f for f in book["files"]}
             if book.get("covers"):
                 entry["covers"] = {l: base + published_path(book, p) for l, p in book["covers"].items()}
+            if book.get("backs"):
+                entry["backs"] = {l: base + published_path(book, p) for l, p in book["backs"].items()}
             if book.get("downloads"):
                 entry["downloads"] = [{"kind": d["kind"], "lang": d["lang"], "url": base + d["to"], "authority": d["authority"],
                                        "hosted_at": d.get("url") or "the repository",

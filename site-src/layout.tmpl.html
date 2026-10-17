@@ -45,6 +45,21 @@ body.home { max-width: 62rem; }
 .book .cover img { display: block; width: 100%; max-width: 440px; height: auto; border: 1px solid var(--rule);
   box-shadow: 0 10px 28px rgba(0, 0, 0, .14), 0 1px 3px rgba(0, 0, 0, .12); }
 .book .cover:hover img { box-shadow: 0 14px 34px rgba(0, 0, 0, .2), 0 1px 3px rgba(0, 0, 0, .14); }
+.book .cover-block .cover { margin: 0 0 12px; }
+.book .cover .flip { display: block; perspective: 1800px; }
+.book .cover .inner { display: block; position: relative; max-width: 440px; transform-style: preserve-3d; transition: transform .7s ease; }
+.book .cover-block.is-back .inner { transform: rotateY(180deg); }
+.book .cover .inner img { backface-visibility: hidden; -webkit-backface-visibility: hidden; }
+.book .cover .inner img.back { position: absolute; top: 0; left: 0; transform: rotateY(180deg); }
+.faces { display: flex; flex-wrap: wrap; align-items: center; gap: 8px 18px; margin: 0 0 24px;
+  font: 500 var(--t-label)/1.4 system-ui, 'Segoe UI', sans-serif; }
+.faces[hidden] { display: none; }
+.faces .sides { display: inline-flex; border: 1px solid var(--ink); border-radius: 4px; overflow: hidden; }
+.faces button { font: inherit; padding: 6px 16px; border: 0; background: transparent; color: var(--ink); cursor: pointer; }
+.faces button + button { border-left: 1px solid var(--ink); }
+.faces button[aria-pressed="true"] { background: var(--ink); color: var(--paper); }
+.faces button:focus-visible, .faces a:focus-visible { outline: 3px solid var(--ink); outline-offset: 2px; }
+@media (prefers-reduced-motion: reduce) { .book .cover .inner { transition: none; } }
 .work, .agents, .prose section { display: block; border-top: 1px solid var(--rule); padding: 32px 0; }
 .prose h2 { margin-bottom: 12px; }
 .prose p { margin: 0 0 12px; }

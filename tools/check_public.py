@@ -346,12 +346,21 @@ def check_site(args):
         (rep.ok(f"{lang} index: {cards} book cards for {published} published books") if cards == published
          else rep.fail(f"{lang} index: {cards} book cards for {published} published books"))
         heavy = []
-        for src in re.findall(r'<a class="cover"[^>]*><img src="([^"]+)"', index):
+        for src in re.findall(r'<img class="(?:front|back)" src="([^"]+)"', index):
             f = (site / PAGES["index"][lang]).parent / src
             if f.is_file() and f.stat().st_size > 500 << 10:
                 heavy.append(f"{src} ({f.stat().st_size >> 10} KB)")
         (rep.warn(f"{lang} index: card covers over 500 KB, run tools/make_thumbs.py after a cover changes: {heavy}") if heavy
          else rep.ok(f"{lang} index: every card cover is light (under 500 KB)"))
+        with_back = sum(1 for b in reg["books"] if b["publish"] and b.get("backs"))
+        blocks, faces = index.count('<div class="cover-block">'), index.count('<p class="faces" hidden>')
+        backs, pressed = len(re.findall(r'<img class="back" ', index)), len(re.findall(r'<button type="button" data-face="(?:front|back)" aria-pressed=', index))
+        (rep.ok(f"{lang} index: {with_back} cover(s) turn over by a visible Front | Back control (a back cover, two buttons, a full-size link each)")
+         if blocks == faces == backs == with_back and pressed == 2 * with_back
+         else rep.fail(f"{lang} index: {blocks} cover blocks, {faces} controls, {backs} back covers, {pressed} buttons for {with_back} books that have a back cover"))
+        full = re.findall(r'data-back="([^"]+)"', index)
+        gone = [u for u in full if not (site / PAGES["index"][lang]).parent.joinpath(u.split("#")[0]).is_file()]
+        (rep.fail(f"{lang} index: the full-size back covers are not in the site: {gone}") if gone else None)
         covers = index.count('<a class="cover" ')
         with_cover = sum(1 for b in reg["books"] if b["publish"] and b.get("covers"))
         (rep.ok(f"{lang} index: every book with a cover shows it, linked to its reader ({covers})") if covers == with_cover

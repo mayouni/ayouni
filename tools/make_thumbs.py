@@ -38,12 +38,14 @@ def main():
     for book in reg["books"]:
         if not book["publish"]:
             continue
-        for lang, rel in book.get("covers", {}).items():
+        faces = [(lang, rel, "") for lang, rel in book.get("covers", {}).items()] + \
+                [(lang, rel, ".back") for lang, rel in book.get("backs", {}).items()]
+        for lang, rel, face in faces:
             data = blob(book, rel)
             im = Image.open(io.BytesIO(data)).convert("RGB")
             h = round(WIDTH * im.height / im.width)
             im = im.resize((WIDTH, h), Image.LANCZOS)
-            name = f"{book['slug']}.{lang}.jpg"
+            name = f"{book['slug']}.{lang}{face}.jpg"
             im.save(OUT / name, "JPEG", quality=86, optimize=True, progressive=True)
             manifest[name] = {"source": f"{book['folder']}/{rel}", "sha256": hashlib.sha256(data).hexdigest(), "width": WIDTH, "height": h}
             print(f"{name}: {WIDTH}x{h}, {(OUT / name).stat().st_size >> 10} KB, from {book['folder']}/{rel} ({len(data) >> 10} KB)")

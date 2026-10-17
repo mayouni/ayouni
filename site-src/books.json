@@ -28,6 +28,7 @@
           "sha256": "d8f1b76b7d5ec3ce6bb814e7a08f2fe8a2691481179f186ea68c0b4d2c46fceb", "bytes": 16071904 }
       ],
       "covers": { "en": "assets/cover/cover.png", "fr": "assets/cover/cover.fr.png" },
+      "backs": { "en": "assets/cover/back.png", "fr": "assets/cover/back.fr.png" },
       "title": { "en": "Softanza", "fr": "Softanza" },
       "subtitle": { "en": "The Governed Software Platform of the AI Age", "fr": "La plateforme logicielle gouvernée de l'ère de l'IA" },
       "tagline": { "en": "Declare what you know. A court keeps it. The AI model comes last.", "fr": "Déclarez ce que vous savez, un tribunal le garde, le modèle d'IA vient en dernier." },
