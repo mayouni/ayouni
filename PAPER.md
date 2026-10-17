@@ -20,9 +20,9 @@ with organisations:
 |---|---|---|
 | Service planned | IngramSpark, print on demand (its publishing plan, written before HOUSE-12) | none named |
 | Trim | 6 x 9 in, perfect-bound paperback (its publishing plan); the PDF is built at exactly 6 x 9 in | 6.5 x 8.5 in, the cover's own proportion, full bleed (the book's PRINT-01) |
-| Pages | 107 (PDF rebuilt 2026-10-15, one page more than the 106 of 2026-07-18: the last page before the back cover) | 622 English, 640 French (proof copy PDFs, per the book session) |
+| Pages | 108 (PDF rebuilt 2026-10-17 as a bound book: cover, inside covers, half title, title page, contents, back cover) | 622 English, 640 French (proof copy PDFs, per the book session) |
 | ISBN | pending | none recorded |
-| Cover art | `web/cover.png`, 2194 x 2868 px, white background | front `assets/cover/cover.png` and back `assets/cover/back.png` (and `back.fr.png`), 2194 x 2868 px, white background |
+| Cover art | front `web/cover.png` and back `web/cover-back.png`, 2194 x 2868 px, white background | front `assets/cover/cover.png` and back `assets/cover/back.png` (and `back.fr.png`), 2194 x 2868 px, white background |
 
 ## The desk's proposal (for the author to choose)
 

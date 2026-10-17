@@ -42,7 +42,8 @@
       "publish": true,
       "readers": { "en": "web/index.html" },
       "covers": { "en": "web/cover.png" },
-      "map": { "web/index.html": "en/index.html", "web/cover.png": "en/cover.png" },
+      "backs": { "en": "web/cover-back.png" },
+      "map": { "web/index.html": "en/index.html", "web/cover.png": "en/cover.png", "web/cover-back.png": "en/back.png" },
       "downloads": [
         { "kind": "pdf", "lang": "en", "from": "web/book.pdf", "to": "book.pdf", "authority": "HOUSE-11" }
       ],
