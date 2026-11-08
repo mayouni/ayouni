@@ -55,7 +55,7 @@ A menu with levels names a **section** at the parent level; the section's **land
 
 ## Voice on public pages (HOUSE-21)
 
-Public pages (the house site, the books' readers, the public README of each public repository) state what the work **is** and **does**, in affirmative sentences. No line lists what has not been done, shown, measured or perceived ("not yet", "nobody has", "never been run", "Limit:"); nothing is inflated or false, so a line that limited a claim is rewritten to state the claim at its true size; what has not been measured stays in the repository's own documents. The gate refuses these phrases (`site-src/voice-allow.json` is its allow list, each entry with its reason; `python tools/check_public.py voice FILE` lists a file's lines). Framework: AWF-14.
+Public pages (the house site, the books' readers, the public README of each public repository) state what the work **is** and **does**, in affirmative sentences. No line lists what has not been done, shown, measured or perceived ("not yet", "nobody has", "never been run", "Limit:"); nothing is inflated or false, so a line that limited a claim is rewritten to state the claim at its true size; what has not been measured stays in the repository's own documents. The gate refuses these phrases (`site-src/voice-allow.json` is its allow list, each entry with its reason; `python tools/check_public.py voice FILE` lists a file's lines). A chapter's limit section stays, retitled for what its subject covers today and written affirmatively, with the stage reached in place of "absent" (HOUSE-22). Framework: AWF-14, AWF-15.
 
 ## Code in the books (HOUSE-CODE-01)
 
