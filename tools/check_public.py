@@ -89,6 +89,128 @@ def git(*args, cwd, binary=False):
     return r.stdout if binary else r.stdout.decode("utf-8", errors="replace")
 
 
+# ---------------------------------------------------------------- menus (HOUSE-20)
+# The Principal's menu rule of 2026-11-08: a menu with levels names a SECTION at the parent level; the section's landing page is the FIRST entry of
+# the child level, under a label that differs from the section's; no child label repeats its parent's, and no two siblings share a label (case and a
+# leading article ignored). The same three codes as Zane's `zane check` (Rule 116).
+
+MENU_ORDINAL = re.compile(r"^\s*(?:(?:part|partie)\s+[ivxlc\d]+|appendix\s+[a-z]|annexe\s+[a-z]|[a-z]?\d+|[a-z])\s*[\u00b7\u2014\u2013:\-]\s+", re.I)
+
+
+def menu_label(label):
+    """A menu label as the rule compares it: tags and ordinals ("Part I ·", "3 ·") dropped, case and a leading article ignored."""
+    s = html.unescape(re.sub(r"<[^>]+>", "", label))
+    s = MENU_ORDINAL.sub("", s, count=1)
+    s = re.sub(r"\s+", " ", s).strip().casefold()
+    return re.sub(r"^(?:(?:the|le|la|les)\s+|l')", "", s)
+
+
+def menu_faults(node, path=()):
+    """The three faults, as (code, where, detail). A node is {"label", "href", "children"}; a section is a node with children, and its landing
+    page is the node's own href: it must be the first child, under another label."""
+    here = (*path, node["label"]) if node["label"] else path
+    where = " > ".join(here) or "menu"
+    kids, out = node.get("children", []), []
+    if kids:
+        if node.get("href"):
+            at = [i for i, k in enumerate(kids) if k.get("href") == node["href"]]
+            if not at:
+                out.append(("MENU_LANDING_NOT_FIRST", where, f"the section's landing page ({node['href']}) is not among its entries"))
+            elif at[0] != 0:
+                out.append(("MENU_LANDING_NOT_FIRST", where, f"the section's landing page is entry {at[0] + 1}, not the first"))
+        seen = {}
+        for k in kids:
+            if node["label"] and menu_label(k["label"]) == menu_label(node["label"]):
+                out.append(("MENU_LABEL_REPEATS_PARENT", where, f"{k['label']!r} repeats its section's label"))
+            seen.setdefault(menu_label(k["label"]), []).append(k["label"])
+        out += [("MENU_LABEL_DUPLICATE", where, f"siblings share a label: {labels}") for labels in seen.values() if len(labels) > 1]
+        for k in kids:
+            out += menu_faults(k, here)
+    return out
+
+
+def menu_size(node):
+    return sum(1 + menu_size(k) for k in node.get("children", []))
+
+
+def nav_tree(text):
+    """The house's own menu (<nav class="site-nav">): one flat level of entries."""
+    m = re.search(r'<nav class="site-nav"[^>]*>(.*?)</nav>', text, re.S)
+    kids = [{"label": re.sub(r"<[^>]+>", "", e), "href": h or None, "children": []}
+            for h, e in re.findall(r'<(?:a|span)\b[^>]*?(?:href="([^"]*)")?[^>]*>(.*?)</(?:a|span)>', m.group(1), re.S)] if m else []
+    return {"label": "", "href": None, "children": kids}
+
+
+def sidebar_tree(text):
+    """A reader's contents menu (id="sidebarNav"): entries at the root, and under each Part its chapters. A Part is a heading (class sb-part) or a link
+    whose label begins "Part I" / "Partie I"; a Part that links to a page of its own has that page as its landing."""
+    m = re.search(r'id="sidebarNav"(.*?)</nav>', text, re.S) or re.search(r'id="sidebarNav"(.*?)</aside>', text, re.S)
+    if not m:
+        return None
+    root = {"label": "", "href": None, "children": []}
+    cur = root
+    for h in re.finditer(r'<div class="sb-part">(.*?)</div>|<a class="sidebar-link[^"]*" href="([^"]*)"><span class="sl-text"[^>]*>(.*?)</span><span class="sl-leader">', m.group(1), re.S):
+        if h.group(1) is not None:
+            cur = {"label": html.unescape(h.group(1)), "href": None, "children": []}
+            root["children"].append(cur)
+            continue
+        label = html.unescape(re.sub(r"<[^>]+>", "", h.group(3)))
+        node = {"label": label, "href": h.group(2), "children": []}
+        if re.match(r"^\s*(?:part|partie)\s+[ivxlc\d]+\b", label, re.I):
+            cur = node
+            root["children"].append(node)
+        else:
+            cur["children"].append(node)
+    return root
+
+
+def check_menu(rep, label, tree, enforce=True):
+    faults = menu_faults(tree)
+    if not faults:
+        rep.ok(f"{label}: the menu follows the rule ({menu_size(tree)} entries)")
+    for code, where, detail in faults[:8]:
+        (rep.fail if enforce else rep.warn)(f"{label}: {code} at {where}: {detail}")
+
+
+def node(label, href=None, *children):
+    return {"label": label, "href": href, "children": list(children)}
+
+
+MENU_FIXTURES = {
+    "a good menu": (node("", None, node("Approach", "/approach/", node("Overview", "/approach/"), node("Method", "/approach/method/"), node("Evidence", "/approach/evidence/")),
+                         node("Licence", "/licence/")), set()),
+    "a child repeats its section's label": (node("", None, node("Approach", "/approach/", node("Approach", "/approach/"), node("Method", "/approach/method/"))),
+                                            {"MENU_LABEL_REPEATS_PARENT"}),
+    "the landing page is not the first entry": (node("", None, node("Approach", "/approach/", node("Method", "/approach/method/"), node("Overview", "/approach/"))),
+                                                {"MENU_LANDING_NOT_FIRST"}),
+    "a section's landing page is not among its entries": (node("", None, node("Approach", "/approach/", node("Method", "/approach/method/"))), {"MENU_LANDING_NOT_FIRST"}),
+    "two siblings share a label, case and a leading The ignored": (node("", None, node("Method", "/method/"), node("The method", "/other/")), {"MENU_LABEL_DUPLICATE"}),
+}
+
+
+def menu_selftest(rep, show=False):
+    """The guard guarded: the good menu passes, and each broken one is refused with exactly its fault."""
+    bad = 0
+    for name, (tree, expect) in MENU_FIXTURES.items():
+        got = {c for c, _, _ in menu_faults(tree)}
+        if show:
+            print(f"  fixture {name}: {sorted(got) or 'no fault'}")
+            for c, w, d in menu_faults(tree):
+                print(f"      {c} at {w}: {d}")
+        if got != expect:
+            bad += 1
+            rep.fail(f"menu rule self-test: {name}: expected {sorted(expect) or 'no fault'}, got {sorted(got) or 'no fault'}")
+    if not bad:
+        rep.ok(f"menu rule self-test: the good menu passes and each of the {len(MENU_FIXTURES) - 1} broken ones is refused with its own code")
+
+
+def check_menus_cmd(args):
+    rep = Report(args.strict)
+    print("menu rule self-test (HOUSE-20): a good menu, then one broken menu per fault")
+    menu_selftest(rep, show=True)
+    return rep.code()
+
+
 # ---------------------------------------------------------------- site
 
 def css_blocks(css):
@@ -271,6 +393,9 @@ def check_site(args):
         for lang, source_rel in book["readers"].items():
             rel = book.get("map", {}).get(source_rel, source_rel)
             text = (dest / rel).read_text(encoding="utf-8", errors="replace")
+            tree = sidebar_tree(text)
+            if tree is not None:
+                check_menu(rep, f"{lang} reader of {slug}: contents menu", tree, book.get("menus", "enforce") == "enforce")
             norm = lambda s: re.sub(r"[\W_]+", " ", s.casefold()).strip()
             desc = norm(html.unescape((re.search(r'<meta name="description" content="([^"]*)"', text) or [None, ""])[1]))
             if re.search(r"(?i)pay what it was worth|payez ce que le livre|payez ce qu'il", text):
@@ -336,6 +461,17 @@ def check_site(args):
                 gate = re.findall(r"(?i)<(form|input|script|dialog|iframe)\b", text)
                 (rep.ok(f"{lang} {label}: no form, script, dialog or frame: nothing can gate or nag") if not gate
                  else rep.fail(f"{lang} {label}: {sorted(set(gate))} on a page that must never gate or nag"))
+    house_nav = []
+    for key in PAGES:
+        for lang in ("en", "fr"):
+            tree = nav_tree((site / PAGES[key][lang]).read_text(encoding="utf-8"))
+            house_nav += [(f"{lang} {key} page: house menu", tree)]
+    for label, tree in house_nav:
+        if menu_faults(tree):
+            check_menu(rep, label, tree)
+    if not any(menu_faults(t) for _, t in house_nav):
+        rep.ok(f"the house menu on {len(house_nav)} pages follows the menu rule (one level, {menu_size(house_nav[0][1])} entries, no repeated label)")
+    menu_selftest(rep)
     contact = reg["house"]["contact"]
     plain = lambda s: re.sub(r"\s+", " ", html.unescape(re.sub(r"<[^>]+>", "", s))).strip()  # inline tags only: a link inside a sentence
     for lang in ("en", "fr"):
@@ -533,13 +669,14 @@ def main():
     sub = ap.add_subparsers(dest="cmd", required=True)
     s = sub.add_parser("site"); s.add_argument("--site", default="site"); s.add_argument("--online", action="store_true")
     t = sub.add_parser("tree"); t.add_argument("repos", nargs="*")
+    m = sub.add_parser("menus")
     h = sub.add_parser("history"); h.add_argument("repos", nargs="+"); h.add_argument("--deny-file")
-    for p in (s, t, h):
+    for p in (s, t, m, h):
         p.add_argument("--strict", action="store_true")
     args = ap.parse_args()
     if hasattr(sys.stdout, "reconfigure"):
         sys.stdout.reconfigure(encoding="utf-8")
-    sys.exit({"site": check_site, "tree": check_tree, "history": check_history}[args.cmd](args))
+    sys.exit({"site": check_site, "tree": check_tree, "history": check_history, "menus": check_menus_cmd}[args.cmd](args))
 
 
 if __name__ == "__main__":
