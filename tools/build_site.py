@@ -84,8 +84,8 @@ STRINGS = {
         "agents_p": ("Each published book is also data, at the same address as its readers: a manifest, a summary, the full text, "
                      "and one file per page (agents/&lt;slug&gt;.md). llms.txt lists them; house.json gives the exact URLs and "
                      "the commit each book was built from."),
-        "footer": "AYOUNI Press is the books imprint of AYOUNI.",
-        "colophon": "Free to read and share under CC BY-NC-ND 4.0; code under the library's licence.",
+        "footer": "AYOUNI Press is the books imprint of Mansour Ayouni.",
+        "colophon": "Copyright © 2026 Mansour Ayouni. Free to read and share under CC BY-NC-ND 4.0; code under the MIT licence.",
         "pages": {
             "offer": {"title": "How these books are offered, and how to work with the author",
                       "lead": "Every AYOUNI book is free to read, in every form. There is no payment. What is sold is the work around the books.",
@@ -131,8 +131,8 @@ STRINGS = {
         "agents_p": ("Chaque livre publié est aussi une donnée, à la même adresse que ses lecteurs : un manifeste, un résumé, le texte intégral "
                      "et un fichier par page (agents/&lt;slug&gt;.md). llms.txt les liste ; house.json donne les adresses exactes et "
                      "le commit d'où chaque livre a été construit."),
-        "footer": "Éditions AYOUNI est la ligne de livres de la maison AYOUNI.",
-        "colophon": "Libre à lire et à partager sous CC BY-NC-ND 4.0 ; le code sous la licence de la bibliothèque.",
+        "footer": "Éditions AYOUNI est la ligne de livres de Mansour Ayouni.",
+        "colophon": "Copyright © 2026 Mansour Ayouni. Libre à lire et à partager sous CC BY-NC-ND 4.0 ; code sous licence MIT.",
         "pages": {
             "offer": {"title": "Comment ces livres sont offerts, et comment travailler avec l'auteur",
                       "lead": "Chaque livre AYOUNI est libre à lire, sous toutes ses formes. Il n'y a aucun paiement. Ce qui est vendu, c'est le travail autour des livres.",

@@ -25,7 +25,7 @@ has not given, and never gates anything.
 | The offer page | <https://mayouni.github.io/ayouni/offer/> | <https://mayouni.github.io/ayouni/fr/offre/> |
 | The licence page | <https://mayouni.github.io/ayouni/licence/> | <https://mayouni.github.io/ayouni/fr/licence/> |
 | **The invitation** (word for word) | If this book is useful to your organisation, I work with organisations on its subjects: paper copies in quantity, workshops and training, talks, consulting and the building of solutions. Write to kalidianow@gmail.com. | Si ce livre est utile à votre organisation, je travaille avec les organisations sur ses sujets : exemplaires papier en quantité, ateliers et formations, conférences, conseil et réalisation de solutions. Écrivez à kalidianow@gmail.com. |
-| **The colophon line** | Free to read and share under CC BY-NC-ND 4.0; code under the library's licence. | Libre à lire et à partager sous CC BY-NC-ND 4.0 ; le code sous la licence de la bibliothèque. |
+| **The colophon line** | Copyright © 2026 Mansour Ayouni. Free to read and share under CC BY-NC-ND 4.0; code under the MIT licence. | Copyright © 2026 Mansour Ayouni. Libre à lire et à partager sous CC BY-NC-ND 4.0 ; code sous licence MIT. |
 
 - **The address** is the author's current one, until he makes a dedicated one; where a link is possible it is a `mailto:` link. When he changes it,
   the house changes `site-src/books.json` (`house.contact`) and tells each book session; the sentence does not change.
