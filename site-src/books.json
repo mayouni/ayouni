@@ -45,7 +45,7 @@
       "covers": { "en": "web/cover.png" },
       "backs": { "en": "web/cover-back.png" },
       "menus": "enforce",
-      "voice": "report",
+      "voice": "enforce",
       "map": { "web/index.html": "en/index.html", "web/cover.png": "en/cover.png", "web/cover-back.png": "en/back.png" },
       "downloads": [
         { "kind": "pdf", "lang": "en", "from": "web/book.pdf", "to": "book.pdf", "authority": "HOUSE-11" }
