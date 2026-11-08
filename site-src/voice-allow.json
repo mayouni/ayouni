@@ -1,4 +1,10 @@
 {
   "about": "Phrases the voice check (HOUSE-21) allows. A phrase that lists what has not been done, shown, measured or perceived is refused on a public page; an entry here allows one where it is the right word. Each entry has a scope (house, a book's slug, or *), a match (a regular expression the phrase's surrounding words must match) and its reason.",
-  "allow": []
+  "allow": [
+    {
+      "scope": "softanza",
+      "match": "Sing is not available YET",
+      "reason": "The library's own refusal message, quoted verbatim as program output in chapter 31; it is the program's voice, not the book's."
+    }
+  ]
 }

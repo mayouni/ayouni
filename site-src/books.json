@@ -12,7 +12,7 @@
     {
       "slug": "softanza",
       "moved_by_author": {},
-      "voice": "report",
+      "voice": "enforce",
       "folder": "books/softanza-book",
       "publish": true,
       "manifest": "book.json",
@@ -22,11 +22,11 @@
       "dirs": ["agents", "assets/fonts"],
       "downloads": [
         { "kind": "pdf", "lang": "en", "to": "book.en.pdf", "authority": "HOUSE-11", "local": "print/softanza-en.pdf",
-          "url": "https://github.com/mayouni/softanza-book/releases/download/proof-copy-2026-10-30/softanza-en.pdf",
-          "sha256": "55c0972e2dc53ffc45c3a75bd1e713438f64100102485a9d98bde3863a820011", "bytes": 15548302 },
+          "url": "https://github.com/mayouni/softanza-book/releases/download/proof-copy-2026-11-08/softanza-en.pdf",
+          "sha256": "a8976e74536cbf8043d420190087061ca9c30316077c2260931574616b3c37b5", "bytes": 15541093 },
         { "kind": "pdf", "lang": "fr", "to": "book.fr.pdf", "authority": "HOUSE-11", "local": "print/softanza-fr.pdf",
-          "url": "https://github.com/mayouni/softanza-book/releases/download/proof-copy-2026-10-30/softanza-fr.pdf",
-          "sha256": "ba5060040ad9f239df355702bc0ad70fd2f5dc4ef25de88cfbbfbd1a2b6a7a1b", "bytes": 15603442 }
+          "url": "https://github.com/mayouni/softanza-book/releases/download/proof-copy-2026-11-08/softanza-fr.pdf",
+          "sha256": "8cb4cc0775a73a87ab84beda93b413e4ba710f8597865274c8da6e5400ae7467", "bytes": 15602911 }
       ],
       "covers": { "en": "assets/cover/cover.png", "fr": "assets/cover/cover.fr.png" },
       "backs": { "en": "assets/cover/back.png", "fr": "assets/cover/back.fr.png" },
