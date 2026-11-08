@@ -53,6 +53,10 @@ Every page of every book has one of three stages, and its banner says which: **D
 
 A menu with levels names a **section** at the parent level; the section's **landing page is the first entry** of the child level, under a label that differs from the section's ("Intro", "Overview", or a word naming what the page holds); no child label repeats its parent's and no two siblings share a label (case and a leading "The" ignored). It binds the house site and every book's reader. The gate refuses MENU_LABEL_REPEATS_PARENT, MENU_LANDING_NOT_FIRST and MENU_LABEL_DUPLICATE (`python tools/check_public.py menus` shows it refusing a broken menu).
 
+## Voice on public pages (HOUSE-21)
+
+Public pages (the house site, the books' readers, the public README of each public repository) state what the work **is** and **does**, in affirmative sentences. No line lists what has not been done, shown, measured or perceived ("not yet", "nobody has", "never been run", "Limit:"); nothing is inflated or false, so a line that limited a claim is rewritten to state the claim at its true size; what has not been measured stays in the repository's own documents. The gate refuses these phrases (`site-src/voice-allow.json` is its allow list, each entry with its reason; `python tools/check_public.py voice FILE` lists a file's lines). Framework: AWF-14.
+
 ## Code in the books (HOUSE-CODE-01)
 
 Every book, doc and site shows code in the author's order of forms (the framework's AWF-12): the scene form with braces is the basis (three or more calls on one object); the chain for one sentence; the classic form shown; Naturally(...) shown where it runs; `@@()` stays until Haro prints the expressive form by default, and then the expressive printout is the norm in books, docs and their sites.

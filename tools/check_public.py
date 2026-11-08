@@ -211,6 +211,146 @@ def check_menus_cmd(args):
     return rep.code()
 
 
+# ---------------------------------------------------------------- voice (HOUSE-21)
+# The author's ruling of 2026-11-08 on how public pages speak: state what the work IS and DOES, in affirmative sentences; no line lists what has not been
+# done, shown, measured or perceived ("not yet", "nobody has", "never been run", "Limit:"); nothing is inflated or false; what has not been measured stays in
+# the repository's own documents. This check refuses the phrases; `site-src/voice-allow.json` allows a phrase where it is the right word, and each entry
+# gives its reason (an entry without one fails the check).
+
+VOICE_PHRASES = {
+    "not yet": r"\bnot yet\b",
+    "is not ... yet": r"\b(?:is|are|was|were|has|have|had)(?:n['\u2019]t| not)\b[^.;:!?\n]{0,40}\byet\b",
+    "nobody has": r"\b(?:nobody|no one) (?:has|had|have)\b",
+    "never been / run / measured / shown": r"\bnever (?:been|run|measured|shown|tested|perceived)\b",
+    "has not been / measured / shown / run": r"\b(?:has|have|had)(?:n['\u2019]t| not) (?:been|measured|shown|tested|run)\b",
+    "Limit:": r"\bLimits?:",
+    "not measured / shown / tested / perceived": r"\bnot (?:been )?(?:measured|shown|tested|perceived)\b",
+    "not run": r"(?<!do )(?<!to )(?<!must )(?<!should )(?<!can )(?<!will )(?<!don't )\bnot (?:been )?run\b",
+    "unmeasured / untested / unproven": r"\b(?:unmeasured|untested|unproven)\b",
+    "yet to": r"\byet to\b",
+    "nothing runs": r"\bnothing (?:runs|is measured)\b",
+    "pas encore": r"\bpas encore\b",
+    "personne n'a": r"\bpersonne n['\u2019]a\b",
+    "jamais été / exécuté / mesuré": r"\bjamais (?:été|exécuté|mesuré|testé|montré)\b",
+    "Limite :": r"\bLimites? :",
+    "n'a pas été": r"\bn['\u2019](?:a|ont) (?:pas|jamais) été\b",
+    "non mesuré": r"\bnon (?:mesuré|testé|démontré)\b",
+}
+VOICE_RE = {k: re.compile(v, re.I) for k, v in VOICE_PHRASES.items()}
+VOICE_ALLOW = ROOT / "site-src" / "voice-allow.json"
+
+
+def voice_text(text, kind="html"):
+    """The words a reader reads: scripts, styles and code blocks dropped, tags stripped (HTML); fenced code and front matter dropped (Markdown)."""
+    if kind == "html":
+        text = re.sub(r"(?s)<(script|style|pre)\b.*?</\1>", " ", text)
+        text = re.sub(r"<[^>]+>", " ", text)
+    else:
+        text = re.sub(r"(?s)\A---\n.*?\n---\n", " ", text)
+        text = re.sub(r"(?s)```.*?```", " ", text)
+    return re.sub(r"\s+", " ", html.unescape(text))
+
+
+def voice_allow_list(rep=None):
+    """The allow list; an entry needs its scope, the context it matches and its reason."""
+    entries = json.loads(VOICE_ALLOW.read_text(encoding="utf-8")).get("allow", []) if VOICE_ALLOW.is_file() else []
+    bad = [e for e in entries if not (e.get("scope") and e.get("match") and len(str(e.get("reason", "")).strip()) >= 12)]
+    if rep is not None:
+        (rep.fail(f"voice allow list: {len(bad)} entr{'y' if len(bad) == 1 else 'ies'} without a scope, a match or a reason: {[e.get('match') for e in bad][:3]}") if bad
+         else rep.ok(f"voice allow list: {len(entries)} entr{'y' if len(entries) == 1 else 'ies'}, each with its reason"))
+    return [e for e in entries if e not in bad]
+
+
+def voice_hits(text, scope, allow):
+    """(phrase, context) for every phrase the text uses and the allow list does not excuse."""
+    out = []
+    for name, rx in VOICE_RE.items():
+        for m in rx.finditer(text):
+            ctx = text[max(0, m.start() - 70): m.end() + 60].strip()
+            if any(e["scope"] in ("*", scope) and re.search(e["match"], ctx, re.I) for e in allow):
+                continue
+            out.append((name, ctx))
+    return out
+
+
+def check_voice(rep, label, text, scope, enforce=True, allow=()):
+    hits = voice_hits(text, scope, allow)
+    if not hits:
+        rep.ok(f"{label}: affirmative voice, no phrase that lists what is missing")
+        return
+    kinds = Counter(n for n, _ in hits)
+    (rep.fail if enforce else rep.warn)(f"{label}: {len(hits)} phrase(s) that list what is missing {dict(kinds.most_common(4))}, e.g. ...{hits[0][1]}...")
+
+
+VOICE_FIXTURES = [
+    ("an affirmative sentence", "Every chapter runs its code and prints the verdict under it.", [], False),
+    ("not yet", "The reader is not yet on this address.", [], True),
+    ("nobody has", "Nobody has measured it.", [], True),
+    ("never been run", "The block has never been run.", [], True),
+    ("a Limit: line", "Limit: it handles one world.", [], True),
+    ("a French line", "Ce n'est pas encore mesuré.", [], True),
+    ("an imperative is not a gap", "Do not run the build from here.", [], False),
+    ("an allowed phrase", "The licence term not measured by sales is explained here.", [{"scope": "*", "match": "licence term", "reason": "a licence term, not a claim about the work"}], False),
+]
+
+
+def voice_selftest(rep, show=False):
+    """The guard guarded: affirmative text passes, each gap phrase is refused, the allow list excuses only what it names, and an entry without a reason fails."""
+    bad = 0
+    for name, text, allow, expect in VOICE_FIXTURES:
+        got = bool(voice_hits(text, "selftest", allow))
+        if show:
+            print(f"  fixture {name}: {'refused: ' + ', '.join(n for n, _ in voice_hits(text, 'selftest', allow)) if got else 'passes'}")
+        if got != expect:
+            bad += 1
+            rep.fail(f"voice self-test: {name}: expected {'a refusal' if expect else 'a pass'}")
+    class Quiet(Report):
+        def ok(self, msg):
+            pass
+
+        def fail(self, msg):
+            self.fails += 1
+
+        def warn(self, msg):
+            self.warns += 1
+
+    probe = Quiet(False)
+    saved = VOICE_ALLOW
+    tmp = ROOT / "site-src" / ".voice-allow-selftest.json"
+    try:
+        tmp.write_text(json.dumps({"allow": [{"scope": "*", "match": "x"}]}), encoding="utf-8")
+        globals()["VOICE_ALLOW"] = tmp
+        voice_allow_list(probe)
+    finally:
+        globals()["VOICE_ALLOW"] = saved
+        tmp.unlink(missing_ok=True)
+    if show:
+        print(f"  fixture an allow entry without a reason: {'refused' if probe.fails else 'passes'}")
+    if not probe.fails:
+        bad += 1
+        rep.fail("voice self-test: an allow entry without a reason was not refused")
+    if not bad:
+        rep.ok(f"voice self-test: affirmative text passes, {sum(1 for f in VOICE_FIXTURES if f[3])} gap phrases are refused, the allow list excuses only what it names")
+
+
+def check_voice_cmd(args):
+    """`voice` alone runs the self-test; `voice FILE...` lists what each .html or .md file says that the rule refuses, with its context."""
+    rep = Report(args.strict)
+    if not args.files:
+        print("voice rule self-test (HOUSE-21)")
+        voice_selftest(rep, show=True)
+        return rep.code()
+    allow = voice_allow_list(rep)
+    for f in args.files:
+        p = Path(f)
+        hits = voice_hits(voice_text(p.read_text(encoding="utf-8", errors="replace"), "html" if p.suffix.lower() in (".html", ".htm") else "md"), args.scope, allow)
+        print(f"{f}: {len(hits)} phrase(s)")
+        for name, ctx in hits[: args.limit]:
+            print(f"   [{name}] ...{ctx}...")
+        rep.warn(f"{f}: {len(hits)} phrase(s) that list what is missing") if hits else rep.ok(f"{f}: affirmative voice")
+    return rep.code()
+
+
 # ---------------------------------------------------------------- site
 
 def css_blocks(css):
@@ -318,6 +458,7 @@ def check_site(args):
         if not (site / need).is_file():
             rep.fail(f"missing {need}")
 
+    allow = voice_allow_list(rep)
     stz_targets = set()
     for book in reg["books"]:
         if not book["publish"]:
@@ -393,6 +534,7 @@ def check_site(args):
         for lang, source_rel in book["readers"].items():
             rel = book.get("map", {}).get(source_rel, source_rel)
             text = (dest / rel).read_text(encoding="utf-8", errors="replace")
+            check_voice(rep, f"{lang} reader of {slug}", voice_text(text), slug, book.get("voice", "enforce") == "enforce", allow)
             tree = sidebar_tree(text)
             if tree is not None:
                 check_menu(rep, f"{lang} reader of {slug}: contents menu", tree, book.get("menus", "enforce") == "enforce")
@@ -472,6 +614,12 @@ def check_site(args):
     if not any(menu_faults(t) for _, t in house_nav):
         rep.ok(f"the house menu on {len(house_nav)} pages follows the menu rule (one level, {menu_size(house_nav[0][1])} entries, no repeated label)")
     menu_selftest(rep)
+    voice_selftest(rep)
+    for key in PAGES:
+        for lang in ("en", "fr"):
+            check_voice(rep, f"{lang} {key} page", voice_text((site / PAGES[key][lang]).read_text(encoding="utf-8")), "house", True, allow)
+    check_voice(rep, "llms.txt", voice_text((site / "llms.txt").read_text(encoding="utf-8"), "md"), "house", True, allow)
+    check_voice(rep, "README.md", voice_text((ROOT / "README.md").read_text(encoding="utf-8"), "md"), "house", True, allow)
     contact = reg["house"]["contact"]
     plain = lambda s: re.sub(r"\s+", " ", html.unescape(re.sub(r"<[^>]+>", "", s))).strip()  # inline tags only: a link inside a sentence
     for lang in ("en", "fr"):
@@ -670,13 +818,14 @@ def main():
     s = sub.add_parser("site"); s.add_argument("--site", default="site"); s.add_argument("--online", action="store_true")
     t = sub.add_parser("tree"); t.add_argument("repos", nargs="*")
     m = sub.add_parser("menus")
+    v = sub.add_parser("voice"); v.add_argument("files", nargs="*"); v.add_argument("--scope", default="house"); v.add_argument("--limit", type=int, default=12)
     h = sub.add_parser("history"); h.add_argument("repos", nargs="+"); h.add_argument("--deny-file")
-    for p in (s, t, m, h):
+    for p in (s, t, m, v, h):
         p.add_argument("--strict", action="store_true")
     args = ap.parse_args()
     if hasattr(sys.stdout, "reconfigure"):
         sys.stdout.reconfigure(encoding="utf-8")
-    sys.exit({"site": check_site, "tree": check_tree, "history": check_history, "menus": check_menus_cmd}[args.cmd](args))
+    sys.exit({"site": check_site, "tree": check_tree, "history": check_history, "menus": check_menus_cmd, "voice": check_voice_cmd}[args.cmd](args))
 
 
 if __name__ == "__main__":

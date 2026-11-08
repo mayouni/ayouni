@@ -12,6 +12,7 @@
     {
       "slug": "softanza",
       "moved_by_author": {},
+      "voice": "report",
       "folder": "books/softanza-book",
       "publish": true,
       "manifest": "book.json",
@@ -44,6 +45,7 @@
       "covers": { "en": "web/cover.png" },
       "backs": { "en": "web/cover-back.png" },
       "menus": "enforce",
+      "voice": "report",
       "map": { "web/index.html": "en/index.html", "web/cover.png": "en/cover.png", "web/cover-back.png": "en/back.png" },
       "downloads": [
         { "kind": "pdf", "lang": "en", "from": "web/book.pdf", "to": "book.pdf", "authority": "HOUSE-11" }
