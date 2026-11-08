@@ -43,8 +43,7 @@
       "readers": { "en": "web/index.html" },
       "covers": { "en": "web/cover.png" },
       "backs": { "en": "web/cover-back.png" },
-      "menus": "report",
-      "menus_note": "The live Teaching Edition's contents menu links each Part to a page of its own that is not among its entries (HOUSE-20): reported until its session fixes the reader, then set to enforce.",
+      "menus": "enforce",
       "map": { "web/index.html": "en/index.html", "web/cover.png": "en/cover.png", "web/cover-back.png": "en/back.png" },
       "downloads": [
         { "kind": "pdf", "lang": "en", "from": "web/book.pdf", "to": "book.pdf", "authority": "HOUSE-11" }
