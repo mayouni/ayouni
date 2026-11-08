@@ -90,9 +90,9 @@ def git(*args, cwd, binary=False):
 
 
 # ---------------------------------------------------------------- menus (HOUSE-20)
-# The Principal's menu rule of 2026-11-08: a menu with levels names a SECTION at the parent level; the section's landing page is the FIRST entry of
+# The author's menu rule of 2026-11-08: a menu with levels names a SECTION at the parent level; the section's landing page is the FIRST entry of
 # the child level, under a label that differs from the section's; no child label repeats its parent's, and no two siblings share a label (case and a
-# leading article ignored). The same three codes as Zane's `zane check` (Rule 116).
+# leading article ignored). Each fault has its own code.
 
 MENU_ORDINAL = re.compile(r"^\s*(?:(?:part|partie)\s+[ivxlc\d]+|appendix\s+[a-z]|annexe\s+[a-z]|[a-z]?\d+|[a-z])\s*[\u00b7\u2014\u2013:\-]\s+", re.I)
 
