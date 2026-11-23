@@ -58,6 +58,39 @@
       "state": { "en": "The book as a web reader.", "fr": "Le livre en lecteur web, en anglais." },
       "author": "Mansour Ayouni",
       "known_gaps": []
+    },
+    {
+      "slug": "zayn",
+      "folder": "books/zayn-book",
+      "publish": true,
+      "readers": {
+        "en": "en/index.html"
+      },
+      "covers": {
+        "en": "assets/cover/cover.png"
+      },
+      "dirs": ["assets/fonts"],
+      "menus": "enforce",
+      "voice": "enforce",
+      "colophon": "enforce",
+      "title": {
+        "en": "Zayn",
+        "fr": "Zayn"
+      },
+      "subtitle": {
+        "en": "UI Governance in the Agentic Era",
+        "fr": null
+      },
+      "series": {
+        "en": "Third of the AYOUNI books",
+        "fr": "Troisième des livres AYOUNI"
+      },
+      "state": {
+        "en": "The book as a web reader.",
+        "fr": "Le livre en lecteur web, en anglais."
+      },
+      "author": "Mansour Ayouni",
+      "known_gaps": []
     }
   ]
 }

@@ -5,6 +5,16 @@
       "scope": "softanza",
       "match": "Sing is not available YET",
       "reason": "The library's own refusal message, quoted verbatim as program output in chapter 31; it is the program's voice, not the book's."
+    },
+    {
+      "scope": "zayn",
+      "match": "where they have not yet been",
+      "reason": "A sentence of Zayn's own rule 115, quoted verbatim in a law card: it describes the places a visitor has not yet visited, not the state of the book."
+    },
+    {
+      "scope": "zayn",
+      "match": "The \"Bounce\" Limit",
+      "reason": "The title of one of Zayn's own interface rules, quoted verbatim in a law card: it is the rule's name, not a line about what the book lacks."
     }
   ]
 }

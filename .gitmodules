@@ -7,3 +7,6 @@
 [submodule "books/refinement-book"]
 	path = books/refinement-book
 	url = https://github.com/mayouni/refinement-book.git
+[submodule "books/zayn-book"]
+	path = books/zayn-book
+	url = https://github.com/mayouni/zayn-book.git
