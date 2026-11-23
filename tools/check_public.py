@@ -535,6 +535,11 @@ def check_site(args):
             rel = book.get("map", {}).get(source_rel, source_rel)
             text = (dest / rel).read_text(encoding="utf-8", errors="replace")
             check_voice(rep, f"{lang} reader of {slug}", voice_text(text), slug, book.get("voice", "enforce") == "enforce", allow)
+            colo = re.sub(r"[\W_]+", " ", STRINGS[lang]["colophon"].casefold()).strip()  # HOUSE-25: every reader carries the house colophon line
+            shown = re.sub(r"[\W_]+", " ", voice_text(text).casefold())
+            (rep.ok(f"{lang} reader of {slug}: carries the house colophon line (copyright and licences)") if colo in shown
+             else (rep.fail if book.get("colophon", "enforce") == "enforce" else rep.warn)(
+                 f"{lang} reader of {slug}: does not carry the house colophon line: {STRINGS[lang]['colophon']!r}"))
             tree = sidebar_tree(text)
             if tree is not None:
                 check_menu(rep, f"{lang} reader of {slug}: contents menu", tree, book.get("menus", "enforce") == "enforce")

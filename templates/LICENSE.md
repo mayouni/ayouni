@@ -48,5 +48,5 @@ The AYOUNI name and wordmark are not covered by these licences and may not be us
 
 Every reader and every PDF of the book carries this line, in the language of the edition:
 
-- English: *Free to read and share under CC BY-NC-ND 4.0; code under the library's licence.*
-- French: *Libre à lire et à partager sous CC BY-NC-ND 4.0 ; le code sous la licence de la bibliothèque.*
+- English: *Copyright © 2026 Mansour Ayouni. Free to read and share under CC BY-NC-ND 4.0; code under the MIT licence.*
+- French: *Copyright © 2026 Mansour Ayouni. Libre à lire et à partager sous CC BY-NC-ND 4.0 ; code sous licence MIT.*
