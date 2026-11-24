@@ -15,7 +15,7 @@ Two kinds of session work in this folder:
 | 0 | *Beginning Ring Programming* (Apress, 2020) | `books/ring-book/` | **archive**: the last files and a study of the writing (`style/`); the source of the writing framework. Its own repository; the manuscript files are Apress's property and never go public (HOUSE-06) |
 | 1 | *Softanza — The Governed Software Platform of the AI Age* | `books/softanza-book/` | **active**; the **first** of the AYOUNI books (HOUSE-13); its own repository, a submodule of the house; all pages `status: draft` |
 | 2 | *Refinement-Oriented Programming* | `books/refinement-book/` | the **second** of the AYOUNI books (HOUSE-13); shipped as the Teaching Edition (web reader + PDF, on the house address, HOUSE-10 and HOUSE-11); its own repository (`mayouni/refinement-book`), a submodule of the house (HOUSE-19); **being rewritten radically in its own session**, Softanza as its technical foundation and Refine a product and IDE |
-| 3 | *Zayn: UI Governance in the Agentic Era* | `books/zayn-book/` | the **third** of the AYOUNI books (HOUSE-26); its own repository (`mayouni/zayn-book`), a submodule of the house; English only; all pages `status: draft` |
+| 3 | *Interfaces Under Law: UI governance for people and AI agents, using the Zayn language* | `books/zayn-book/` | the **third** of the AYOUNI books (HOUSE-26); its own repository (`mayouni/zayn-book`, the folder, the repository and the address keep the name `zayn`), a submodule of the house; English only; all pages `status: draft` |
 
 Unless the author says otherwise, a book session works in its book's folder; the house session works here at the root.
 
