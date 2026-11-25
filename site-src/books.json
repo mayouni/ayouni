@@ -69,6 +69,9 @@
       "covers": {
         "en": "assets/cover/cover.png"
       },
+      "backs": {
+        "en": "assets/cover/back.png"
+      },
       "dirs": ["assets/fonts"],
       "menus": "enforce",
       "voice": "enforce",
