@@ -40,5 +40,11 @@
     "sha256": "f0f1189267c23ffbcd532626afd5611f8dc83b6218a6511266d77c7ffb411bc0",
     "width": 880,
     "height": 1150
+  },
+  "zayn.en.back.jpg": {
+    "source": "books/zayn-book/assets/cover/back.png",
+    "sha256": "883895d86e6ab23bb6dbed1758106cb7c8257cb26cd9103e88e5cdecbbccaca3",
+    "width": 880,
+    "height": 1150
   }
 }
